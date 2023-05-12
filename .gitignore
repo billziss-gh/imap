@@ -1,0 +1,6 @@
+*.obj
+*.o
+test.exe
+testcxx.exe
+test
+testcxx

@@ -328,7 +328,7 @@ static void imap_assign_shuffle_dotest(imap_u64_t seed)
     imap_node_t *tree = 0;
     imap_slot_t *slot;
 
-    tlib_printf("seed=%llu ", seed);
+    tlib_printf("seed=%llu ", (unsigned long long)seed);
     test_srand(seed);
 
     array = (imap_u32_t *)malloc(N * sizeof(imap_u32_t));

@@ -526,7 +526,8 @@ extern "C" {
             node = imap__node__(tree, mark);
             pfx = imap__node_prefix__(node);
             pos = pfx & imap__prefix_pos__;
-            IMAP_DUMPFN("%08x: %016llx/%x ", mark, pfx & ~imap__prefix_pos__, pos);
+            IMAP_DUMPFN("%08x: %016llx/%x ",
+                mark, (unsigned long long)(pfx & ~imap__prefix_pos__), pos);
             for (dir = 0; 16 > dir; dir++)
             {
                 sval = node->index[dir];
