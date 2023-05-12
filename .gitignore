@@ -2,5 +2,5 @@
 *.o
 test.exe
 testcxx.exe
-test
-testcxx
+test.out
+testcxx.out
