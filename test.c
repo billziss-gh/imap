@@ -1,5 +1,5 @@
 /*
- * test.cpp
+ * test.c
  *
  * Copyright 2023 Bill Zissimopoulos
  */
