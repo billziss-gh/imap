@@ -11,11 +11,15 @@
  */
 
 #include <tlib/testsuite.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <time.h>
 
 //#define IMAP_USE_SIMD
 #define IMAP_ASSERT(expr)               ASSERT(expr)
-#define IMAP_DUMPFN(...)                tlib_printf(__VA_ARGS__)
+#define IMAP_DUMPFN(ctx, ...)           test_concat_sprintf((char **)ctx, __VA_ARGS__)
+static void test_concat_sprintf(char **pstr, const char *format, ...);
 #include "imap.h"
 
 static imap_u64_t seed = 0;
@@ -28,6 +32,22 @@ static imap_u64_t test_rand(void)
     /* constants used by Knuth and MUSL */
     seed = seed * 6364136223846793005ULL + 1;
     return seed;
+}
+
+static void test_concat_sprintf(char **pstr, const char *format, ...)
+{
+    va_list ap, ap2;
+    va_start(ap, format);
+    va_copy(ap2, ap);
+    size_t len = *pstr ? strlen(*pstr) : 0;
+    size_t newlen = vsnprintf(0, 0, format, ap);
+    char *newstr = (char *)realloc(*pstr, len + newlen + 1);
+    if (newstr)
+    {
+        vsnprintf(newstr + len, newlen + 1, format, ap2);
+        *pstr = newstr;
+    }
+    va_end(ap);
 }
 
 static void imap_ensure_test(void)
@@ -369,12 +389,90 @@ static void imap_assign_shuffle_test(void)
     imap_assign_shuffle_dotest(time(0));
 }
 
+static void imap_dump_test(void)
+{
+    imap_node_t *tree;
+    imap_slot_t *slot;
+    char *dump;
+
+    tree = 0;
+    tree = imap_ensure(tree, +1);
+    ASSERT(0 != tree);
+    dump = 0;
+    imap_dump(tree, &dump);
+    ASSERT(0 == dump);
+    free(dump);
+    imap_free(tree);
+
+    tree = 0;
+    tree = imap_ensure(tree, -5);
+    ASSERT(0 != tree);
+    slot = imap_assign(tree, 0xA0000056);
+    ASSERT(0 != slot);
+    imap_setval(tree, slot, 0x56);
+    slot = imap_assign(tree, 0xA0000057);
+    ASSERT(0 != slot);
+    imap_setval(tree, slot, 0x57);
+    slot = imap_assign(tree, 0xA0008009);
+    ASSERT(0 != slot);
+    imap_setval(tree, slot, 0x8009);
+    slot = imap_assign(tree, 0xA0008059);
+    ASSERT(0 != slot);
+    imap_setval(tree, slot, 0x8059);
+    slot = imap_assign(tree, 0xA0008069);
+    ASSERT(0 != slot);
+    imap_setval(tree, slot, 0x8069);
+    slot = imap_lookup(tree, 0xA0000056);
+    ASSERT(0 != slot);
+    ASSERT(0x56 == imap_getval(tree, slot));
+    dump = 0;
+    imap_dump(tree, &dump);
+    ASSERT(0 == strcmp(dump, ""
+        "00000080: 00000000a0000000/3 0->*40 8->*100\n"
+        "00000040: 00000000a0000050/0 6->56 7->57\n"
+        "00000100: 00000000a0008000/1 0->*c0 5->*140 6->*180\n"
+        "000000c0: 00000000a0008000/0 9->8009\n"
+        "00000140: 00000000a0008050/0 9->8059\n"
+        "00000180: 00000000a0008060/0 9->8069\n"
+        ""));
+    free(dump);
+    imap_delval(tree, slot);
+    slot = imap_lookup(tree, 0xA0000057);
+    ASSERT(0 != slot);
+    ASSERT(0x57 == imap_getval(tree, slot));
+    imap_delval(tree, slot);
+    slot = imap_lookup(tree, 0xA0008009);
+    ASSERT(0 != slot);
+    ASSERT(0x8009 == imap_getval(tree, slot));
+    imap_delval(tree, slot);
+    slot = imap_lookup(tree, 0xA0008059);
+    ASSERT(0 != slot);
+    ASSERT(0x8059 == imap_getval(tree, slot));
+    imap_delval(tree, slot);
+    slot = imap_lookup(tree, 0xA0008069);
+    ASSERT(0 != slot);
+    ASSERT(0x8069 == imap_getval(tree, slot));
+    imap_delval(tree, slot);
+    slot = imap_lookup(tree, 0xA0000056);
+    ASSERT(0 == slot);
+    slot = imap_lookup(tree, 0xA0000057);
+    ASSERT(0 == slot);
+    slot = imap_lookup(tree, 0xA0008009);
+    ASSERT(0 == slot);
+    slot = imap_lookup(tree, 0xA0008059);
+    ASSERT(0 == slot);
+    slot = imap_lookup(tree, 0xA0008069);
+    ASSERT(0 == slot);
+    imap_free(tree);
+}
+
 void imap_tests(void)
 {
     TEST(imap_ensure_test);
     TEST(imap_assign_test);
     TEST(imap_assign_bigval_test);
     TEST(imap_assign_shuffle_test);
+    TEST(imap_dump_test);
 }
 
 int main(int argc, char **argv)

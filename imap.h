@@ -73,7 +73,7 @@ extern "C" {
     IMAP_DECLFUNC
     void imap_delval(imap_node_t *tree, imap_slot_t *slot);
     IMAP_DECLFUNC
-    void imap_dump(imap_node_t *tree);
+    void imap_dump(imap_node_t *tree, void *ctx);
 
 #endif
 
@@ -508,43 +508,56 @@ extern "C" {
         *slot &= imap__slot_pmask__;
     }
 
-    IMAP_DEFNFUNC
-    void imap_dump(imap_node_t *tree)
+    static inline
+    int imap_dump0(imap_node_t *tree, imap_u32_t mark, void *ctx)
     {
         imap_node_t *node;
-        imap_u32_t mark, sval, pos, dir;
+        imap_slot_t *slot;
+        imap_u32_t sval, pos, dir;
         imap_u64_t pfx;
-        IMAP_DUMPFN("tree: root={%08x} free=%x mark=%x size=%x\n",
-            tree->index[imap__tree_root__] & imap__slot_value__,
-            tree->index[imap__tree_free__] >> 6,
-            tree->index[imap__tree_mark__],
-            tree->index[imap__tree_size__]);
-        for (mark = sizeof(imap_node_t);
-            tree->index[imap__tree_mark__] > mark;
-            mark += sizeof(imap_node_t))
+        node = imap__node__(tree, mark);
+        pfx = imap__node_prefix__(node);
+        pos = pfx & imap__prefix_pos__;
+        IMAP_DUMPFN(ctx, "%08x: %016llx/%x",
+            mark, (unsigned long long)(pfx & ~imap__prefix_pos__), pos);
+        for (dir = 0; 16 > dir; dir++)
         {
-            node = imap__node__(tree, mark);
-            pfx = imap__node_prefix__(node);
-            pos = pfx & imap__prefix_pos__;
-            IMAP_DUMPFN("%08x: %016llx/%x ",
-                mark, (unsigned long long)(pfx & ~imap__prefix_pos__), pos);
-            for (dir = 0; 16 > dir; dir++)
+            slot = &node->index[dir];
+            sval = *slot;
+            if (sval & imap__slot_node__)
+                IMAP_DUMPFN(ctx, " %x->*%x", dir, sval & imap__slot_value__);
+            else if (sval & imap__slot_value__)
+                IMAP_DUMPFN(ctx, " %x->%llx", dir, (unsigned long long)imap_getval(tree, slot));
+        }
+        IMAP_DUMPFN(ctx, "\n");
+        return pos;
+    }
+
+    IMAP_DEFNFUNC
+    void imap_dump(imap_node_t *tree, void *ctx)
+    {
+        imap_node_t *node;
+        imap_u32_t sval, dir;
+        imap_u32_t stack[2 + 2 * 16], sp = 0;
+        stack[sp++] = 0;
+        stack[sp++] = 16;
+        while (sp)
+        {
+            sval = stack[sp - 2];
+            dir = stack[sp - 1]++;
+            node = imap__node__(tree, sval & imap__slot_value__);
+            sval = node->index[dir & 15];
+            if (sval & imap__slot_node__)
             {
-                sval = node->index[dir];
-                if (sval & imap__slot_value__)
+                if (imap_dump0(tree, sval & imap__slot_value__, ctx))
                 {
-                    const char *l = "", *r = "";
-                    if (sval & imap__slot_node__)
-                        l = "{", r = "}";
-                    else if (!(sval & imap__slot_scalar__))
-                        l = "[", r = "]";
-                    IMAP_DUMPFN("%x->%s%x%s ",
-                        dir, l, (sval & imap__slot_node__) ? (sval & imap__slot_value__) : (sval >> 6), r);
+                    stack[sp++] = sval;
+                    stack[sp++] = 0;
                 }
             }
-            IMAP_DUMPFN("\n");
+            else
+                sp -= ((dir + 1) >> 4) << 1; /* if (16 <= dir + 1) sp -= 2; */
         }
-        IMAP_DUMPFN("\n");
     }
 
 #endif
