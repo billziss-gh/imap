@@ -16,8 +16,8 @@ test: test.out
 testcxx: testcxx.out
 	./testcxx.out
 test.out: imap.h test.c
-	gcc -I. -Wall -O3 -fno-strict-aliasing -x c test.c -x c tlib/testsuite.c -o $@
+	gcc -I. -Wall -O3 -x c test.c -x c tlib/testsuite.c -o $@
 testcxx.out: imap.h test.c
-	g++ -I. -Wall -O3 -fno-strict-aliasing -x c++ test.c -x c tlib/testsuite.c -o $@
+	g++ -I. -Wall -O3 -x c++ test.c -x c tlib/testsuite.c -o $@
 
 endif
