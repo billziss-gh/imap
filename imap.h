@@ -48,13 +48,25 @@ extern "C" {
     #endif
 
     typedef struct imap_node imap_node_t;
+    typedef imap_u32_t imap_slot_t;
+    typedef struct imap_iter imap_iter_t;
+    typedef struct imap_pair imap_pair_t;
+
     struct imap_node
     {
         /* 64 bytes */
         imap_u32_t index[16];
     };
-
-    typedef imap_u32_t imap_slot_t;
+    struct imap_iter
+    {
+        imap_u32_t stack[16];
+        imap_u32_t stackp;
+    };
+    struct imap_pair
+    {
+        imap_u64_t x;
+        imap_slot_t *slot;
+    };
 
     IMAP_DECLFUNC
     void imap_free(imap_node_t *tree);
@@ -72,6 +84,10 @@ extern "C" {
     void imap_setval(imap_node_t *tree, imap_slot_t *slot, imap_u64_t y);
     IMAP_DECLFUNC
     void imap_delval(imap_node_t *tree, imap_slot_t *slot);
+    IMAP_DECLFUNC
+    imap_pair_t imap_locate(imap_node_t *tree, imap_iter_t *iter, imap_u64_t x);
+    IMAP_DECLFUNC
+    imap_pair_t imap_iterate(imap_node_t *tree, imap_iter_t *iter, int restart);
     IMAP_DECLFUNC
     void imap_dump(imap_node_t *tree, void *ctx);
 
@@ -232,6 +248,16 @@ extern "C" {
     #define imap__tree_mark__           2
     #define imap__tree_size__           3
 
+    #ifdef __cplusplus
+    #define imap__node_zero__           (imap_node_t{ 0 })
+    #define imap__pair_zero__           (imap_pair_t{ 0 })
+    #define imap__pair__(x, slot)       (imap_pair_t{ (x), (slot) })
+    #else
+    #define imap__node_zero__           ((imap_node_t){ 0 })
+    #define imap__pair_zero__           ((imap_pair_t){ 0 })
+    #define imap__pair__(x, slot)       ((imap_pair_t){ (x), (slot) })
+    #endif
+
     static inline
     imap_u32_t imap__alloc_node__(imap_node_t *tree, imap_u32_t n)
     {
@@ -246,12 +272,6 @@ extern "C" {
     {
         return (imap_node_t *)((imap_u8_t *)tree + val);
     }
-
-    #ifdef __cplusplus
-    #define imap__node_zero__           (imap_node_t{ 0 })
-    #else
-    #define imap__node_zero__           ((imap_node_t){ 0 })
-    #endif
 
     static inline
     imap_u64_t imap__node_prefix__(imap_node_t *node)
@@ -384,21 +404,21 @@ extern "C" {
     {
         imap_node_t *node = tree;
         imap_slot_t *slot;
-        imap_u32_t sval, pos = 16, dir = 0;
+        imap_u32_t sval, posn = 16, dirn = 0;
         for (;;)
         {
-            slot = &node->index[dir];
+            slot = &node->index[dirn];
             sval = *slot;
             if (!(sval & imap__slot_node__))
             {
-                if (!(sval & imap__slot_value__) || 0 != pos ||
+                if (!(sval & imap__slot_value__) || 0 != posn ||
                     imap__node_prefix__(node) != (x & ~0xfull))
                     return 0;
                 return slot;
             }
             node = imap__node__(tree, sval & imap__slot_value__);
-            pos = imap__node_pos__(node);
-            dir = imap__xdir__(x, pos);
+            posn = imap__node_pos__(node);
+            dirn = imap__xdir__(x, posn);
         }
     }
 
@@ -407,37 +427,37 @@ extern "C" {
     {
         imap_node_t *newnode, *node = tree;
         imap_slot_t *slot;
-        imap_u32_t newmark, sval, diff, pos = 16, dir = 0;
-        imap_u64_t pfx;
+        imap_u32_t newmark, sval, diff, posn = 16, dirn = 0;
+        imap_u64_t prfx;
         for (;;)
         {
-            slot = &node->index[dir];
+            slot = &node->index[dirn];
             sval = *slot;
             if (!(sval & imap__slot_node__))
             {
-                if (0 == pos)
+                if (0 == posn)
                     return slot;
                 newmark = imap__alloc_node__(tree, 1);
                 *slot = (*slot & imap__slot_pmask__) | imap__slot_node__ | newmark;
                 break;
             }
             node = imap__node__(tree, sval & imap__slot_value__);
-            pfx = imap__node_prefix__(node);
-            pos = pfx & imap__prefix_pos__;
-            diff = imap__xpos__(pfx ^ x);
-            if (diff > pos)
+            prfx = imap__node_prefix__(node);
+            posn = prfx & imap__prefix_pos__;
+            diff = imap__xpos__(prfx ^ x);
+            if (diff > posn)
             {
                 newmark = imap__alloc_node__(tree, 2);
                 *slot = (*slot & imap__slot_pmask__) | imap__slot_node__ | newmark;
                 newnode = imap__node__(tree, newmark);
                 newmark += sizeof(imap_node_t);
                 *newnode = imap__node_zero__;
-                newnode->index[imap__xdir__(pfx, diff)] = sval;
+                newnode->index[imap__xdir__(prfx, diff)] = sval;
                 newnode->index[imap__xdir__(x, diff)] = imap__slot_node__ | newmark;
-                imap__node_setprefix__(newnode, imap__xpfx__(pfx, diff) | diff);
+                imap__node_setprefix__(newnode, imap__xpfx__(prfx, diff) | diff);
                 break;
             }
-            dir = imap__xdir__(x, pos);
+            dirn = imap__xdir__(x, posn);
         }
         newnode = imap__node__(tree, newmark);
         *newnode = imap__node_zero__;
@@ -508,55 +528,120 @@ extern "C" {
         *slot &= imap__slot_pmask__;
     }
 
+    IMAP_DEFNFUNC
+    imap_pair_t imap_locate(imap_node_t *tree, imap_iter_t *iter, imap_u64_t x)
+    {
+        imap_node_t *node = tree;
+        imap_slot_t *slot;
+        imap_u32_t sval, posn = 16, dirn = 0;
+        iter->stackp = 0;
+        for (;;)
+        {
+            slot = &node->index[dirn];
+            sval = *slot;
+            if (!(sval & imap__slot_node__))
+            {
+                if (!(sval & imap__slot_value__) || 0 != posn ||
+                    imap__node_prefix__(node) != (x & ~0xfull))
+                    return imap_iterate(tree, iter, 0);
+                return imap__pair__(imap__node_prefix__(node) | dirn, slot);
+            }
+            node = imap__node__(tree, sval & imap__slot_value__);
+            posn = imap__node_pos__(node);
+            dirn = imap__xdir__(x, posn);
+            iter->stack[iter->stackp++] = ((sval & imap__slot_value__) | dirn) + 1;
+        }
+    }
+
+    IMAP_DEFNFUNC
+    imap_pair_t imap_iterate(imap_node_t *tree, imap_iter_t *iter, int restart)
+    {
+        imap_node_t *node;
+        imap_slot_t *slot;
+        imap_u32_t sval, dirn;
+        if (restart)
+        {
+            iter->stackp = 0;
+            sval = dirn = 0;
+            goto enter;
+        }
+        // loop while stack is not empty
+        while (iter->stackp)
+        {
+            // get slot value and increment direction
+            sval = iter->stack[iter->stackp - 1]++;
+            dirn = sval & 31;
+            if (15 < dirn)
+            {
+                // if directions 0-15 have been examined, pop node from stack
+                iter->stackp--;
+                continue;
+            }
+        enter:
+            node = imap__node__(tree, sval & imap__slot_value__);
+            slot = &node->index[dirn];
+            sval = *slot;
+            if (sval & imap__slot_node__)
+                // push node into stack
+                iter->stack[iter->stackp++] = sval & imap__slot_value__;
+            else if (sval & imap__slot_value__)
+                return imap__pair__(imap__node_prefix__(node) | dirn, slot);
+        }
+        return imap__pair_zero__;
+    }
+
     static inline
     int imap_dump0(imap_node_t *tree, imap_u32_t mark, void *ctx)
     {
         imap_node_t *node;
         imap_slot_t *slot;
-        imap_u32_t sval, pos, dir;
-        imap_u64_t pfx;
+        imap_u32_t sval, posn, dirn;
+        imap_u64_t prfx;
         node = imap__node__(tree, mark);
-        pfx = imap__node_prefix__(node);
-        pos = pfx & imap__prefix_pos__;
+        prfx = imap__node_prefix__(node);
+        posn = prfx & imap__prefix_pos__;
         IMAP_DUMPFN(ctx, "%08x: %016llx/%x",
-            mark, (unsigned long long)(pfx & ~imap__prefix_pos__), pos);
-        for (dir = 0; 16 > dir; dir++)
+            mark, (unsigned long long)(prfx & ~imap__prefix_pos__), posn);
+        for (dirn = 0; 16 > dirn; dirn++)
         {
-            slot = &node->index[dir];
+            slot = &node->index[dirn];
             sval = *slot;
             if (sval & imap__slot_node__)
-                IMAP_DUMPFN(ctx, " %x->*%x", dir, sval & imap__slot_value__);
+                IMAP_DUMPFN(ctx, " %x->*%x", dirn, sval & imap__slot_value__);
             else if (sval & imap__slot_value__)
-                IMAP_DUMPFN(ctx, " %x->%llx", dir, (unsigned long long)imap_getval(tree, slot));
+                IMAP_DUMPFN(ctx, " %x->%llx", dirn, (unsigned long long)imap_getval(tree, slot));
         }
         IMAP_DUMPFN(ctx, "\n");
-        return pos;
+        return posn;
     }
 
     IMAP_DEFNFUNC
     void imap_dump(imap_node_t *tree, void *ctx)
     {
+        imap_iter_t iterdata, *iter = &iterdata;
         imap_node_t *node;
-        imap_u32_t sval, dir;
-        imap_u32_t stack[2 + 2 * 16], sp = 0;
-        stack[sp++] = 0;
-        stack[sp++] = 16;
-        while (sp)
+        imap_u32_t sval, dirn;
+        iter->stackp = 0;
+        sval = dirn = 0;
+        goto enter;
+        // loop while stack is not empty
+        while (iter->stackp)
         {
-            sval = stack[sp - 2];
-            dir = stack[sp - 1]++;
-            node = imap__node__(tree, sval & imap__slot_value__);
-            sval = node->index[dir & 15];
-            if (sval & imap__slot_node__)
+            // get slot value and increment direction
+            sval = iter->stack[iter->stackp - 1]++;
+            dirn = sval & 31;
+            if (15 < dirn)
             {
-                if (imap_dump0(tree, sval & imap__slot_value__, ctx))
-                {
-                    stack[sp++] = sval;
-                    stack[sp++] = 0;
-                }
+                // if directions 0-15 have been examined, pop node from stack
+                iter->stackp--;
+                continue;
             }
-            else
-                sp -= ((dir + 1) >> 4) << 1; /* if (16 <= dir + 1) sp -= 2; */
+        enter:
+            node = imap__node__(tree, sval & imap__slot_value__);
+            sval = node->index[dirn];
+            if (sval & imap__slot_node__ && imap_dump0(tree, sval & imap__slot_value__, ctx))
+                // push node into stack, if node pos != 0
+                iter->stack[iter->stackp++] = sval & imap__slot_value__;
         }
     }
 
