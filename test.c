@@ -389,6 +389,74 @@ static void imap_assign_shuffle_test(void)
     imap_assign_shuffle_dotest(time(0));
 }
 
+static void imap_remove_test(void)
+{
+    imap_node_t *tree;
+    imap_slot_t *slot;
+
+    tree = 0;
+    tree = imap_ensure(tree, +1);
+    ASSERT(0 != tree);
+    imap_remove(tree, 0);
+    imap_free(tree);
+
+    tree = 0;
+    tree = imap_ensure(tree, -5);
+    ASSERT(0 != tree);
+    slot = imap_assign(tree, 0xA0000056);
+    ASSERT(0 != slot);
+    imap_setval(tree, slot, 0x56);
+    slot = imap_assign(tree, 0xA0000057);
+    ASSERT(0 != slot);
+    imap_setval(tree, slot, 0x57);
+    slot = imap_assign(tree, 0xA0008009);
+    ASSERT(0 != slot);
+    imap_setval(tree, slot, 0x8009);
+    slot = imap_assign(tree, 0xA0008059);
+    ASSERT(0 != slot);
+    imap_setval(tree, slot, 0x8059);
+    slot = imap_assign(tree, 0xA0008069);
+    ASSERT(0 != slot);
+    imap_setval(tree, slot, 0x8069);
+
+    slot = imap_lookup(tree, 0xA0000056);
+    ASSERT(0 != slot);
+    ASSERT(0x56 == imap_getval(tree, slot));
+    imap_remove(tree, 0xA0000056);
+    slot = imap_lookup(tree, 0xA0000056);
+    ASSERT(0 == slot);
+
+    slot = imap_lookup(tree, 0xA0000057);
+    ASSERT(0 != slot);
+    ASSERT(0x57 == imap_getval(tree, slot));
+    imap_remove(tree, 0xA0000057);
+    slot = imap_lookup(tree, 0xA0000057);
+    ASSERT(0 == slot);
+
+    slot = imap_lookup(tree, 0xA0008009);
+    ASSERT(0 != slot);
+    ASSERT(0x8009 == imap_getval(tree, slot));
+    imap_remove(tree, 0xA0008009);
+    slot = imap_lookup(tree, 0xA0008009);
+    ASSERT(0 == slot);
+
+    slot = imap_lookup(tree, 0xA0008059);
+    ASSERT(0 != slot);
+    ASSERT(0x8059 == imap_getval(tree, slot));
+    imap_remove(tree, 0xA0008059);
+    slot = imap_lookup(tree, 0xA0008059);
+    ASSERT(0 == slot);
+
+    slot = imap_lookup(tree, 0xA0008069);
+    ASSERT(0 != slot);
+    ASSERT(0x8069 == imap_getval(tree, slot));
+    imap_remove(tree, 0xA0008069);
+    slot = imap_lookup(tree, 0xA0008069);
+    ASSERT(0 == slot);
+
+    imap_free(tree);
+}
+
 static void imap_iterate_test(void)
 {
     imap_node_t *tree;
@@ -652,6 +720,7 @@ void imap_tests(void)
     TEST(imap_assign_test);
     TEST(imap_assign_bigval_test);
     TEST(imap_assign_shuffle_test);
+    TEST(imap_remove_test);
     TEST(imap_iterate_test);
     TEST(imap_locate_test);
     TEST(imap_dump_test);

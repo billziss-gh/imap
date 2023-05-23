@@ -89,6 +89,8 @@ extern "C" {
     IMAP_DECLFUNC
     void imap_delval(imap_node_t *tree, imap_slot_t *slot);
     IMAP_DECLFUNC
+    void imap_remove(imap_node_t *tree, imap_u64_t x);
+    IMAP_DECLFUNC
     imap_pair_t imap_locate(imap_node_t *tree, imap_iter_t *iter, imap_u64_t x);
     IMAP_DECLFUNC
     imap_pair_t imap_iterate(imap_node_t *tree, imap_iter_t *iter, int restart);
@@ -258,9 +260,11 @@ extern "C" {
     #endif
 
     #define imap__tree_root__           0
-    #define imap__tree_free__           1
+    #define imap__tree_resv__           1
     #define imap__tree_mark__           2
     #define imap__tree_size__           3
+    #define imap__tree_nfre__           4
+    #define imap__tree_vfre__           5
 
     #ifdef __cplusplus
     #define imap__node_zero__           (imap_node_t{ 0 })
@@ -273,12 +277,25 @@ extern "C" {
     #endif
 
     static inline
-    imap_u32_t imap__alloc_node__(imap_node_t *tree, imap_u32_t n)
+    imap_u32_t imap__alloc_node__(imap_node_t *tree)
     {
-        imap_u32_t mark = tree->vec32[imap__tree_mark__];
-        IMAP_ASSERT(mark + n * sizeof(imap_node_t) <= tree->vec32[imap__tree_size__]);
-        tree->vec32[imap__tree_mark__] = mark + n * sizeof(imap_node_t);
+        imap_u32_t mark = tree->vec32[imap__tree_nfre__];
+        if (mark)
+            tree->vec32[imap__tree_nfre__] = *(imap_u32_t *)((imap_u8_t *)tree + mark);
+        else
+        {
+            mark = tree->vec32[imap__tree_mark__];
+            IMAP_ASSERT(mark + sizeof(imap_node_t) <= tree->vec32[imap__tree_size__]);
+            tree->vec32[imap__tree_mark__] = mark + sizeof(imap_node_t);
+        }
         return mark;
+    }
+
+    static inline
+    void imap__free_node__(imap_node_t *tree, imap_u32_t mark)
+    {
+        *(imap_u32_t *)((imap_u8_t *)tree + mark) = tree->vec32[imap__tree_nfre__];
+        tree->vec32[imap__tree_nfre__] = mark;
     }
 
     static inline
@@ -306,9 +323,20 @@ extern "C" {
     }
 
     static inline
-    void imap__node_setpos__(imap_node_t *node, imap_u32_t pos)
+    imap_u32_t imap__node_popcnt__(imap_node_t *node, imap_u32_t *p)
     {
-        node->vec32[0] = (node->vec32[0] & ~0xf) | pos;
+        imap_u32_t pcnt = 0, sval, dirn;
+        *p = 0;
+        for (dirn = 0; 16 > dirn; dirn++)
+        {
+            sval = node->vec32[dirn];
+            if (sval & ~0xf)
+            {
+                *p = sval;
+                pcnt++;
+            }
+        }
+        return pcnt;
     }
 
     static inline
@@ -332,10 +360,10 @@ extern "C" {
     static inline
     imap_u32_t imap__alloc_values__(imap_node_t *tree)
     {
-        imap_u32_t mark = imap__alloc_node__(tree, 1);
+        imap_u32_t mark = imap__alloc_node__(tree);
         imap_node_t *node = imap__node__(tree, mark);
         mark <<= 3;
-        tree->vec32[imap__tree_free__] = mark;
+        tree->vec32[imap__tree_vfre__] = mark;
         node->vec64[0] = mark + (1 << 6);
         node->vec64[1] = mark + (2 << 6);
         node->vec64[2] = mark + (3 << 6);
@@ -375,7 +403,7 @@ extern "C" {
         }
         else
         {
-            hasfree = !!tree->vec32[imap__tree_free__];
+            hasfree = !!tree->vec32[imap__tree_vfre__];
             newmark = tree->vec32[imap__tree_mark__];
             oldsize = tree->vec32[imap__tree_size__];
         }
@@ -394,10 +422,11 @@ extern "C" {
         if (0 == tree)
         {
             newtree->vec32[imap__tree_root__] = 0;
+            newtree->vec32[imap__tree_resv__] = 0;
             newtree->vec32[imap__tree_mark__] = sizeof(imap_node_t);
             newtree->vec32[imap__tree_size__] = newsize;
-            newtree->vec32[imap__tree_free__] = 2 << 6;
-            newtree->vec64[2] = 3 << 6;
+            newtree->vec32[imap__tree_nfre__] = 0;
+            newtree->vec32[imap__tree_vfre__] = 3 << 6;
             newtree->vec64[3] = 4 << 6;
             newtree->vec64[4] = 5 << 6;
             newtree->vec64[5] = 6 << 6;
@@ -451,7 +480,7 @@ extern "C" {
             {
                 if (0 == posn)
                     return slot;
-                newmark = imap__alloc_node__(tree, 1);
+                newmark = imap__alloc_node__(tree);
                 *slot = (*slot & imap__slot_pmask__) | imap__slot_node__ | newmark;
                 break;
             }
@@ -461,10 +490,10 @@ extern "C" {
             diff = imap__xpos__(prfx ^ x);
             if (diff > posn)
             {
-                newmark = imap__alloc_node__(tree, 2);
+                newmark = imap__alloc_node__(tree);
                 *slot = (*slot & imap__slot_pmask__) | imap__slot_node__ | newmark;
                 newnode = imap__node__(tree, newmark);
-                newmark += sizeof(imap_node_t);
+                newmark = imap__alloc_node__(tree);
                 *newnode = imap__node_zero__;
                 newnode->vec32[imap__xdir__(prfx, diff)] = sval;
                 newnode->vec32[imap__xdir__(x, diff)] = imap__slot_node__ | newmark;
@@ -507,8 +536,8 @@ extern "C" {
         {
             if (!(sval & imap__slot_scalar__) && (sval >> 6))
             {
-                tree->vec64[sval >> 6] = tree->vec32[imap__tree_free__];
-                tree->vec32[imap__tree_free__] = sval & imap__slot_value__;
+                tree->vec64[sval >> 6] = tree->vec32[imap__tree_vfre__];
+                tree->vec32[imap__tree_vfre__] = sval & imap__slot_value__;
             }
             *slot = (*slot & imap__slot_pmask__) | imap__slot_scalar__ | (imap_u32_t)(y << 6);
         }
@@ -516,11 +545,11 @@ extern "C" {
         {
             if ((sval & imap__slot_scalar__) || !(sval >> 6))
             {
-                sval = tree->vec32[imap__tree_free__];
+                sval = tree->vec32[imap__tree_vfre__];
                 if (!sval)
                     sval = imap__alloc_values__(tree);
                 IMAP_ASSERT(sval >> 6);
-                tree->vec32[imap__tree_free__] = (imap_u32_t)tree->vec64[sval >> 6];
+                tree->vec32[imap__tree_vfre__] = (imap_u32_t)tree->vec64[sval >> 6];
             }
             IMAP_ASSERT(!(sval & imap__slot_node__));
             IMAP_ASSERT(!(sval & imap__slot_scalar__) && (sval >> 6));
@@ -536,10 +565,57 @@ extern "C" {
         imap_u32_t sval = *slot;
         if (!(sval & imap__slot_scalar__) && (sval >> 6))
         {
-            tree->vec64[sval >> 6] = tree->vec32[imap__tree_free__];
-            tree->vec32[imap__tree_free__] = sval & imap__slot_value__;
+            tree->vec64[sval >> 6] = tree->vec32[imap__tree_vfre__];
+            tree->vec32[imap__tree_vfre__] = sval & imap__slot_value__;
         }
         *slot &= imap__slot_pmask__;
+    }
+
+    IMAP_DEFNFUNC
+    void imap_remove(imap_node_t *tree, imap_u64_t x)
+    {
+        imap_iter_t iterdata, *iter = &iterdata;
+        imap_node_t *node = tree;
+        imap_slot_t *slot;
+        imap_u32_t sval, pval, posn = 16, dirn = 0;
+        iter->stackp = 0;
+        for (;;)
+        {
+            slot = &node->vec32[dirn];
+            sval = *slot;
+            if (!(sval & imap__slot_node__))
+            {
+                if (!(sval & imap__slot_value__) || 0 != posn ||
+                    imap__node_prefix__(node) != (x & ~0xfull))
+                    ;
+                else
+                    imap_delval(tree, slot);
+                break;
+            }
+            node = imap__node__(tree, sval & imap__slot_value__);
+            posn = imap__node_pos__(node);
+            dirn = imap__xdir__(x, posn);
+            iter->stack[iter->stackp++] = (sval & imap__slot_value__) | dirn;
+        }
+        while (iter->stackp)
+        {
+            sval = iter->stack[--iter->stackp];
+            node = imap__node__(tree, sval & imap__slot_value__);
+            posn = !!imap__node_pos__(node);
+            if (posn != imap__node_popcnt__(node, &pval))
+                break;
+            imap__free_node__(tree, sval & imap__slot_value__);
+            if (!iter->stackp)
+                slot = &tree->vec32[0];
+            else
+            {
+                sval = iter->stack[iter->stackp - 1];
+                dirn = sval & 31;
+                node = imap__node__(tree, sval & imap__slot_value__);
+                slot = &node->vec32[dirn];
+            }
+            *slot = (*slot & imap__slot_pmask__) | (pval & ~imap__slot_pmask__);
+        }
     }
 
     IMAP_DEFNFUNC

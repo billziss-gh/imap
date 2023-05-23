@@ -2,6 +2,7 @@
 *.obj
 *.o
 *.pdb
+*.ilk
 test.exe
 testcxx.exe
 test.out
