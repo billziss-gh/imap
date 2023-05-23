@@ -55,7 +55,11 @@ extern "C" {
     struct imap_node
     {
         /* 64 bytes */
-        imap_u32_t index[16];
+        union
+        {
+            imap_u32_t index[16];
+            imap_u64_t value[8];
+        };
     };
     struct imap_iter
     {
@@ -322,14 +326,14 @@ extern "C" {
         imap_node_t *node = imap__node__(tree, mark);
         mark <<= 3;
         tree->index[imap__tree_free__] = mark;
-        ((imap_u64_t *)node)[0] = mark + (1 << 6);
-        ((imap_u64_t *)node)[1] = mark + (2 << 6);
-        ((imap_u64_t *)node)[2] = mark + (3 << 6);
-        ((imap_u64_t *)node)[3] = mark + (4 << 6);
-        ((imap_u64_t *)node)[4] = mark + (5 << 6);
-        ((imap_u64_t *)node)[5] = mark + (6 << 6);
-        ((imap_u64_t *)node)[6] = mark + (7 << 6);
-        ((imap_u64_t *)node)[7] = 0;
+        node->value[0] = mark + (1 << 6);
+        node->value[1] = mark + (2 << 6);
+        node->value[2] = mark + (3 << 6);
+        node->value[3] = mark + (4 << 6);
+        node->value[4] = mark + (5 << 6);
+        node->value[5] = mark + (6 << 6);
+        node->value[6] = mark + (7 << 6);
+        node->value[7] = 0;
         return mark;
     }
 
@@ -383,12 +387,12 @@ extern "C" {
             newtree->index[imap__tree_mark__] = sizeof(imap_node_t);
             newtree->index[imap__tree_size__] = newsize;
             newtree->index[imap__tree_free__] = 2 << 6;
-            ((imap_u64_t *)newtree)[2] = 3 << 6;
-            ((imap_u64_t *)newtree)[3] = 4 << 6;
-            ((imap_u64_t *)newtree)[4] = 5 << 6;
-            ((imap_u64_t *)newtree)[5] = 6 << 6;
-            ((imap_u64_t *)newtree)[6] = 7 << 6;
-            ((imap_u64_t *)newtree)[7] = 0;
+            newtree->value[2] = 3 << 6;
+            newtree->value[3] = 4 << 6;
+            newtree->value[4] = 5 << 6;
+            newtree->value[5] = 6 << 6;
+            newtree->value[6] = 7 << 6;
+            newtree->value[7] = 0;
         }
         else
         {
@@ -481,7 +485,7 @@ extern "C" {
         if (sval & imap__slot_scalar__)
             return sval >> 6;
         else
-            return (sval >> 6) ? ((imap_u64_t *)tree)[sval >> 6] : 0;
+            return (sval >> 6) ? tree->value[sval >> 6] : 0;
     }
 
     IMAP_DEFNFUNC
@@ -493,7 +497,7 @@ extern "C" {
         {
             if (!(sval & imap__slot_scalar__) && (sval >> 6))
             {
-                ((imap_u64_t *)tree)[sval >> 6] = tree->index[imap__tree_free__];
+                tree->value[sval >> 6] = tree->index[imap__tree_free__];
                 tree->index[imap__tree_free__] = sval & imap__slot_value__;
             }
             *slot = (*slot & imap__slot_pmask__) | imap__slot_scalar__ | (imap_u32_t)(y << 6);
@@ -506,12 +510,12 @@ extern "C" {
                 if (!sval)
                     sval = imap__alloc_values__(tree);
                 IMAP_ASSERT(sval >> 6);
-                tree->index[imap__tree_free__] = *(imap_u32_t *)(&((imap_u64_t *)tree)[sval >> 6]);
+                tree->index[imap__tree_free__] = (imap_u32_t)tree->value[sval >> 6];
             }
             IMAP_ASSERT(!(sval & imap__slot_node__));
             IMAP_ASSERT(!(sval & imap__slot_scalar__) && (sval >> 6));
             *slot = (*slot & imap__slot_pmask__) | sval;
-            ((imap_u64_t *)tree)[sval >> 6] = y;
+            tree->value[sval >> 6] = y;
         }
     }
 
@@ -522,7 +526,7 @@ extern "C" {
         imap_u32_t sval = *slot;
         if (!(sval & imap__slot_scalar__) && (sval >> 6))
         {
-            ((imap_u64_t *)tree)[sval >> 6] = tree->index[imap__tree_free__];
+            tree->value[sval >> 6] = tree->index[imap__tree_free__];
             tree->index[imap__tree_free__] = sval & imap__slot_value__;
         }
         *slot &= imap__slot_pmask__;

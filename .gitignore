@@ -1,5 +1,7 @@
+.vscode
 *.obj
 *.o
+*.pdb
 test.exe
 testcxx.exe
 test.out
