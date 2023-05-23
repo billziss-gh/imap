@@ -216,30 +216,40 @@ extern "C" {
     static inline
     imap_u64_t imap__packlo4_port__(imap_u32_t vec32[16])
     {
-        imap_u64_t *vec64 = (imap_u64_t *)vec32;
+        union
+        {
+            imap_u32_t *vec32;
+            imap_u64_t *vec64;
+        } u;
+        u.vec32 = vec32;
         return
-            ((vec64[0] & 0xf0000000full)) |
-            ((vec64[1] & 0xf0000000full) << 4) |
-            ((vec64[2] & 0xf0000000full) << 8) |
-            ((vec64[3] & 0xf0000000full) << 12) |
-            ((vec64[4] & 0xf0000000full) << 16) |
-            ((vec64[5] & 0xf0000000full) << 20) |
-            ((vec64[6] & 0xf0000000full) << 24) |
-            ((vec64[7] & 0xf0000000full) << 28);
+            ((u.vec64[0] & 0xf0000000full)) |
+            ((u.vec64[1] & 0xf0000000full) << 4) |
+            ((u.vec64[2] & 0xf0000000full) << 8) |
+            ((u.vec64[3] & 0xf0000000full) << 12) |
+            ((u.vec64[4] & 0xf0000000full) << 16) |
+            ((u.vec64[5] & 0xf0000000full) << 20) |
+            ((u.vec64[6] & 0xf0000000full) << 24) |
+            ((u.vec64[7] & 0xf0000000full) << 28);
     }
 
     static inline
     void imap__unpacklo4_port__(imap_u32_t vec32[16], imap_u64_t value)
     {
-        imap_u64_t *vec64 = (imap_u64_t *)vec32;
-        vec64[0] = (vec64[0] & ~0xf0000000full) | ((value) & 0xf0000000full);
-        vec64[1] = (vec64[1] & ~0xf0000000full) | ((value >> 4) & 0xf0000000full);
-        vec64[2] = (vec64[2] & ~0xf0000000full) | ((value >> 8) & 0xf0000000full);
-        vec64[3] = (vec64[3] & ~0xf0000000full) | ((value >> 12) & 0xf0000000full);
-        vec64[4] = (vec64[4] & ~0xf0000000full) | ((value >> 16) & 0xf0000000full);
-        vec64[5] = (vec64[5] & ~0xf0000000full) | ((value >> 20) & 0xf0000000full);
-        vec64[6] = (vec64[6] & ~0xf0000000full) | ((value >> 24) & 0xf0000000full);
-        vec64[7] = (vec64[7] & ~0xf0000000full) | ((value >> 28) & 0xf0000000full);
+        union
+        {
+            imap_u32_t *vec32;
+            imap_u64_t *vec64;
+        } u;
+        u.vec32 = vec32;
+        u.vec64[0] = (u.vec64[0] & ~0xf0000000full) | ((value) & 0xf0000000full);
+        u.vec64[1] = (u.vec64[1] & ~0xf0000000full) | ((value >> 4) & 0xf0000000full);
+        u.vec64[2] = (u.vec64[2] & ~0xf0000000full) | ((value >> 8) & 0xf0000000full);
+        u.vec64[3] = (u.vec64[3] & ~0xf0000000full) | ((value >> 12) & 0xf0000000full);
+        u.vec64[4] = (u.vec64[4] & ~0xf0000000full) | ((value >> 16) & 0xf0000000full);
+        u.vec64[5] = (u.vec64[5] & ~0xf0000000full) | ((value >> 20) & 0xf0000000full);
+        u.vec64[6] = (u.vec64[6] & ~0xf0000000full) | ((value >> 24) & 0xf0000000full);
+        u.vec64[7] = (u.vec64[7] & ~0xf0000000full) | ((value >> 28) & 0xf0000000full);
     }
 
     #define imap__packlo4__             imap__packlo4_port__
