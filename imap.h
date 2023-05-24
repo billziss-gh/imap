@@ -388,25 +388,27 @@ extern "C" {
     imap_node_t *imap_ensure(imap_node_t *tree, int n)
     {
         imap_node_t *newtree;
-        imap_u32_t hasfree, newmark, oldsize, newsize;
+        imap_u32_t hasnfre, hasvfre, newmark, oldsize, newsize;
         imap_u64_t newsize64;
         if (0 == n)
             return tree;
         if (0 == tree)
         {
-            hasfree = 1;
+            hasnfre = 0;
+            hasvfre = 1;
             newmark = sizeof(imap_node_t);
             oldsize = 0;
         }
         else
         {
-            hasfree = !!tree->vec32[imap__tree_vfre__];
+            hasnfre = !!tree->vec32[imap__tree_nfre__];
+            hasvfre = !!tree->vec32[imap__tree_vfre__];
             newmark = tree->vec32[imap__tree_mark__];
             oldsize = tree->vec32[imap__tree_size__];
         }
         newmark += 0 > n ?
-            -n * (sizeof(imap_node_t) * 2) :
-            n * (sizeof(imap_node_t) * 2) + (n - hasfree) * sizeof(imap_u64_t);
+            (-n * 2 - hasnfre) * sizeof(imap_node_t) :
+            (+n * 2 - hasnfre) * sizeof(imap_node_t) + (n - hasvfre) * sizeof(imap_u64_t);
         if (newmark <= oldsize)
             return tree;
         newsize64 = imap__ceilpow2__(newmark);
