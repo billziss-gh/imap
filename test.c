@@ -457,6 +457,78 @@ static void imap_remove_test(void)
     imap_free(tree);
 }
 
+static void imap_remove_shuffle_dotest(imap_u64_t seed)
+{
+    const unsigned N = 10000000;
+    imap_u32_t *array;
+    imap_node_t *tree = 0;
+    imap_slot_t *slot;
+
+    tlib_printf("seed=%llu ", (unsigned long long)seed);
+    test_srand(seed);
+
+    array = (imap_u32_t *)malloc(N * sizeof(imap_u32_t));
+    ASSERT(0 != array);
+
+    for (unsigned i = 0; N > i; i++)
+        array[i] = i;
+
+    for (unsigned i = 0; N > i; i++)
+    {
+        tree = imap_ensure(tree, +1);
+        ASSERT(0 != tree);
+        slot = imap_assign(tree, array[i]);
+        ASSERT(0 != slot);
+        imap_setval(tree, slot, i);
+    }
+    for (unsigned i = 0; N > i; i++)
+    {
+        slot = imap_lookup(tree, array[i]);
+        ASSERT(0 != slot);
+        ASSERT(i == imap_getval(tree, slot));
+    }
+
+    for (unsigned i = 0; N > i; i++)
+    {
+        imap_u32_t r = test_rand() % N;
+        imap_u32_t t = array[i];
+        array[i] = array[r];
+        array[r] = t;
+    }
+
+    for (unsigned i = 0; N / 2 > i; i++)
+        imap_remove(tree, array[i]);
+    for (unsigned i = 0; N / 2 > i; i++)
+    {
+        slot = imap_lookup(tree, array[i]);
+        ASSERT(0 == slot);
+    }
+    for (unsigned i = N / 2; N > i; i++)
+    {
+        slot = imap_lookup(tree, array[i]);
+        ASSERT(0 != slot);
+        ASSERT(array[i] == imap_getval(tree, slot));
+    }
+    for (unsigned i = N / 2; N > i; i++)
+        imap_remove(tree, array[i]);
+    for (unsigned i = N / 2; N > i; i++)
+    {
+        slot = imap_lookup(tree, array[i]);
+        ASSERT(0 == slot);
+    }
+
+    ASSERT(0 == tree->vec32[0]);
+
+    imap_free(tree);
+
+    free(array);
+}
+
+static void imap_remove_shuffle_test(void)
+{
+    imap_remove_shuffle_dotest(time(0));
+}
+
 static void imap_iterate_test(void)
 {
     imap_node_t *tree;
@@ -721,6 +793,7 @@ void imap_tests(void)
     TEST(imap_assign_bigval_test);
     TEST(imap_assign_shuffle_test);
     TEST(imap_remove_test);
+    TEST(imap_remove_shuffle_test);
     TEST(imap_iterate_test);
     TEST(imap_locate_test);
     TEST(imap_dump_test);
