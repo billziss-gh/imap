@@ -708,6 +708,32 @@ extern "C" {
         return posn;
     }
 
+    static inline
+    int imap_dump_node_gv(imap_node_t *tree, imap_u32_t mark, imap_dumpfn_t *dumpfn, void *ctx)
+    {
+        imap_node_t *node;
+        imap_slot_t *slot;
+        imap_u32_t sval, posn, dirn;
+        imap_u64_t prfx;
+        node = imap__node__(tree, mark);
+        prfx = imap__node_prefix__(node);
+        posn = prfx & imap__prefix_pos__;
+        dumpfn(ctx, "\"%x\" [shape=record label=\"{%016llx / %x|"
+            "{<0>0|<1>1|<2>2|<3>3|<4>4|<5>5|<6>6|<7>7|<8>8|<9>9|<A>A|<B>B|<C>C|<D>D|<E>E|<F>F}"
+            "}\"]\n",
+            mark, (unsigned long long)(prfx & ~imap__prefix_pos__), posn);
+        for (dirn = 0; 16 > dirn; dirn++)
+        {
+            slot = &node->vec32[dirn];
+            sval = *slot;
+            if (sval & imap__slot_node__)
+                dumpfn(ctx, "\"%x\":\"%x\":s->\"%x\":n\n", mark, dirn, sval & imap__slot_value__);
+            else if (sval & imap__slot_value__)
+                dumpfn(ctx, "\"%x\":\"%x\":s->\"%llx\":n\n", mark, dirn, (unsigned long long)imap_getval(tree, slot));
+        }
+        return posn;
+    }
+
     IMAP_DEFNFUNC
     void imap_dump(imap_node_t *tree, imap_dumpfn_t *dumpfn, void *ctx)
     {
