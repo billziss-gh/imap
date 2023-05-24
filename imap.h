@@ -142,6 +142,10 @@ extern "C" {
 
     #endif
 
+    #if !defined(IMAP_DUMP_NODE)
+    #define IMAP_DUMP_NODE(...)         (imap_dump_node(__VA_ARGS__))
+    #endif
+
     #if defined(_MSC_VER)
 
     static inline
@@ -680,7 +684,7 @@ extern "C" {
     }
 
     static inline
-    int imap_dump0(imap_node_t *tree, imap_u32_t mark, imap_dumpfn_t *dumpfn, void *ctx)
+    int imap_dump_node(imap_node_t *tree, imap_u32_t mark, imap_dumpfn_t *dumpfn, void *ctx)
     {
         imap_node_t *node;
         imap_slot_t *slot;
@@ -728,7 +732,8 @@ extern "C" {
         enter:
             node = imap__node__(tree, sval & imap__slot_value__);
             sval = node->vec32[dirn];
-            if (sval & imap__slot_node__ && imap_dump0(tree, sval & imap__slot_value__, dumpfn, ctx))
+            if (sval & imap__slot_node__ &&
+                IMAP_DUMP_NODE(tree, sval & imap__slot_value__, dumpfn, ctx))
                 // push node into stack, if node pos != 0
                 iter->stack[iter->stackp++] = sval & imap__slot_value__;
         }
