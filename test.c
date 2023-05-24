@@ -18,8 +18,6 @@
 
 //#define IMAP_USE_SIMD
 #define IMAP_ASSERT(expr)               ASSERT(expr)
-#define IMAP_DUMPFN(ctx, ...)           test_concat_sprintf((char **)ctx, __VA_ARGS__)
-static void test_concat_sprintf(char **pstr, const char *format, ...);
 #include "imap.h"
 
 static imap_u64_t seed = 0;
@@ -34,13 +32,14 @@ static imap_u64_t test_rand(void)
     return seed;
 }
 
-static void test_concat_sprintf(char **pstr, const char *format, ...)
+static int test_concat_sprintf(void *ctx, const char *format, ...)
 {
+    char **pstr = (char **)ctx;
     va_list ap, ap2;
     va_start(ap, format);
     va_copy(ap2, ap);
     size_t len = *pstr ? strlen(*pstr) : 0;
-    size_t newlen = vsnprintf(0, 0, format, ap);
+    int newlen = vsnprintf(0, 0, format, ap);
     char *newstr = (char *)realloc(*pstr, len + newlen + 1);
     if (newstr)
     {
@@ -48,6 +47,7 @@ static void test_concat_sprintf(char **pstr, const char *format, ...)
         *pstr = newstr;
     }
     va_end(ap);
+    return newlen;
 }
 
 static void imap_ensure_test(void)
@@ -754,7 +754,7 @@ static void imap_dump_test(void)
     tree = imap_ensure(tree, +1);
     ASSERT(0 != tree);
     dump = 0;
-    imap_dump(tree, &dump);
+    imap_dump(tree, test_concat_sprintf, &dump);
     ASSERT(0 == dump);
     free(dump);
     imap_free(tree);
@@ -779,7 +779,7 @@ static void imap_dump_test(void)
     imap_setval(tree, slot, 0x8069);
     //
     dump = 0;
-    imap_dump(tree, &dump);
+    imap_dump(tree, test_concat_sprintf, &dump);
     ASSERT(0 == strcmp(dump, ""
         "00000080: 00000000a0000000/3 0->*40 8->*100\n"
         "00000040: 00000000a0000050/0 6->56 7->57\n"

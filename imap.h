@@ -51,6 +51,7 @@ extern "C" {
     typedef imap_u32_t imap_slot_t;
     typedef struct imap_iter imap_iter_t;
     typedef struct imap_pair imap_pair_t;
+    typedef int imap_dumpfn_t(void *ctx, const char *fmt, ...);
 
     struct imap_node
     {
@@ -95,7 +96,7 @@ extern "C" {
     IMAP_DECLFUNC
     imap_pair_t imap_iterate(imap_node_t *tree, imap_iter_t *iter, int restart);
     IMAP_DECLFUNC
-    void imap_dump(imap_node_t *tree, void *ctx);
+    void imap_dump(imap_node_t *tree, imap_dumpfn_t *dumpfn, void *ctx);
 
 #endif
 
@@ -114,10 +115,6 @@ extern "C" {
     #if !defined(IMAP_MEMCPY)
     #include <string.h>
     #define IMAP_MEMCPY(dst, src, siz)  (memcpy(dst, src, siz))
-    #endif
-
-    #if !defined(IMAP_DUMPFN)
-    #define IMAP_DUMPFN(...)            ((void)0)
     #endif
 
     #if !defined(IMAP_ALIGNED_ALLOC) && !defined(IMAP_ALIGNED_FREE)
@@ -681,7 +678,7 @@ extern "C" {
     }
 
     static inline
-    int imap_dump0(imap_node_t *tree, imap_u32_t mark, void *ctx)
+    int imap_dump0(imap_node_t *tree, imap_u32_t mark, imap_dumpfn_t *dumpfn, void *ctx)
     {
         imap_node_t *node;
         imap_slot_t *slot;
@@ -690,23 +687,23 @@ extern "C" {
         node = imap__node__(tree, mark);
         prfx = imap__node_prefix__(node);
         posn = prfx & imap__prefix_pos__;
-        IMAP_DUMPFN(ctx, "%08x: %016llx/%x",
+        dumpfn(ctx, "%08x: %016llx/%x",
             mark, (unsigned long long)(prfx & ~imap__prefix_pos__), posn);
         for (dirn = 0; 16 > dirn; dirn++)
         {
             slot = &node->vec32[dirn];
             sval = *slot;
             if (sval & imap__slot_node__)
-                IMAP_DUMPFN(ctx, " %x->*%x", dirn, sval & imap__slot_value__);
+                dumpfn(ctx, " %x->*%x", dirn, sval & imap__slot_value__);
             else if (sval & imap__slot_value__)
-                IMAP_DUMPFN(ctx, " %x->%llx", dirn, (unsigned long long)imap_getval(tree, slot));
+                dumpfn(ctx, " %x->%llx", dirn, (unsigned long long)imap_getval(tree, slot));
         }
-        IMAP_DUMPFN(ctx, "\n");
+        dumpfn(ctx, "\n");
         return posn;
     }
 
     IMAP_DEFNFUNC
-    void imap_dump(imap_node_t *tree, void *ctx)
+    void imap_dump(imap_node_t *tree, imap_dumpfn_t *dumpfn, void *ctx)
     {
         imap_iter_t iterdata, *iter = &iterdata;
         imap_node_t *node;
@@ -729,7 +726,7 @@ extern "C" {
         enter:
             node = imap__node__(tree, sval & imap__slot_value__);
             sval = node->vec32[dirn];
-            if (sval & imap__slot_node__ && imap_dump0(tree, sval & imap__slot_value__, ctx))
+            if (sval & imap__slot_node__ && imap_dump0(tree, sval & imap__slot_value__, dumpfn, ctx))
                 // push node into stack, if node pos != 0
                 iter->stack[iter->stackp++] = sval & imap__slot_value__;
         }
