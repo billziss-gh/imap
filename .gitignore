@@ -1,9 +1,7 @@
 .vscode
 *.obj
-*.o
 *.pdb
 *.ilk
-test.exe
-testcxx.exe
-test.out
-testcxx.out
+*.exe
+*.o
+*.out
