@@ -34,6 +34,12 @@ int main(int argc, char **argv)
             slot = imap_assign(tree, (imap_u64_t)x);
             imap_setval(tree, slot, (imap_u64_t)y);
         }
+        else if (2 == sscanf(line, "%llx %c", &x, &cmd) && '=' == cmd)
+        {
+            /* assign */
+            tree = imap_ensure(tree, +1);
+            slot = imap_assign(tree, (imap_u64_t)x);
+        }
         else if (2 == sscanf(line, "%llx %c", &x, &cmd) && 'r' == cmd)
         {
             /* remove */

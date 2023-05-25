@@ -1,0 +1,10 @@
+digraph {
+    "node" [shape=plaintext label=<
+        <table border="0" cellborder="1" cellspacing="0" cellpadding="4">
+        <tr><td width="100">slot<sub>0</sub></td><td>pos</td></tr>
+        <tr><td width="100">slot<sub>1</sub></td><td>h<sub>1</sub></td></tr>
+        <tr><td width="100">...</td><td>...</td></tr>
+        <tr><td width="100">slot<sub>F</sub></td><td>h<sub>F</sub></td></tr>
+        </table>
+        >]
+}
