@@ -58,6 +58,12 @@ For example, if we also add _x=A0008009->y=8009_:
 
 Here the _00000000a0000000 / 3_ node is the root of the subtree for all _x_ such that _00000000a000**0000** <= x <= 00000000a000**ffff**_. Notice also that the tree need not contain nodes for all positions, but only the positions where the _x_ stored in the tree differ.
 
+### Slot encoding
+
+Slots are 32-bit integers used to encode node and _y_ value information, but also information such as node prefix and position. The lower 4 bits of every slot are used to encode the node prefix and position; this leaves the higher 28 bits to encode node pointer and _y_ value information.
+
+This means that there is a theoretical upper bound of _2<sup>28</sup>=268435456_ to the number of _x->y_ mappings that can be stored in the tree. However the particular implementation in this project uses one slot bit to differentiate between internal and external nodes and one slot bit to denote if a slot contains the _y_ value directly (i.e. without external storage). This brings the theoretical upper bound down to _2<sup>26</sup>=67108864.
+
 ### Lookup Algorithm
 
 ### Assign Algorithm
