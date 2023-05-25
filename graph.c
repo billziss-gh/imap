@@ -42,14 +42,9 @@ int main(int argc, char **argv)
         else if (1 == sscanf(line, "%c", &cmd) && 'd' == cmd)
         {
             /* dump */
-            fprintf(stdout,
-                "digraph G {\n"
-                "ranksep=\"1.0\"\n"
-                "nodesep=\"0.5\"\n"
-                "node [fontname=\"monospace\"]\n");
+            fprintf(stdout, "digraph {\n");
             imap_dump(tree, (imap_dumpfn_t *)fprintf, stdout);
-            fprintf(stdout,
-                "}\n");
+            fprintf(stdout, "}\n");
         }
     }
 
