@@ -64,6 +64,24 @@ Slots are 32-bit integers used to encode node and _y_ value information, but als
 
 This means that there is a theoretical upper bound of _2<sup>28</sup>=268435456_ to the number of _x->y_ mappings that can be stored in the tree. However the particular implementation in this project uses one slot bit to differentiate between internal and external nodes and one slot bit to denote if a slot contains the _y_ value directly (i.e. without external storage). This brings the theoretical upper bound down to _2<sup>26</sup>=67108864_.
 
+### Storage
+
+This data structure attempts to minimize memory accesses and improve performance:
+
+- The tree is compressed along the position axis and only nodes for positions where the stored _x_ differ are kept.
+- The _y_ values are stored using a compression scheme, which avoids the need for external node storage in many cases, thus saving an extra memory access.
+- The tree nodes employ a packing scheme so that they can fit in a cache-line.
+- The tree nodes are cache-aligned.
+
+Notice that tree nodes pack up to 16 pointers to other nodes and that we only have 28 bits (in practice 26) per slot to encode pointer information. This might work on a 32-bit system, but it would not work well on a 64-bit system where the address space is huge.
+
+For this reason this data structure uses a single contiguous array of nodes for its backing storage that is grown (reallocated) when it becomes full. This has many benefits:
+
+- Node pointers are now offsets from the beginning of the array and they can easily fit in the bits available in a slot.
+- Node allocation from the array can be faster than using a general memory allocation scheme like `malloc`.
+- If care is taken to ensure that the allocated array is cache-aligned, then all node accesses are cache-aligned.
+- Spatial cache locality is greatly improved.
+
 ### Lookup Algorithm
 
 ### Assign Algorithm
