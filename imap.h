@@ -482,7 +482,10 @@ extern "C" {
             if (!(sval & imap__slot_node__))
             {
                 if (0 == posn)
+                {
+                    IMAP_ASSERT(imap__node_prefix__(node) == (x & ~0xfull));
                     return slot;
+                }
                 newmark = imap__alloc_node__(tree);
                 *slot = (*slot & imap__slot_pmask__) | imap__slot_node__ | newmark;
                 break;
