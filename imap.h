@@ -211,8 +211,30 @@ extern "C" {
         _mm512_store_epi32(vec32, input);
     }
 
+    static inline
+    imap_u32_t imap__popcnthi28_simd__(imap_u32_t vec32[16], imap_u32_t *p)
+    {
+        // aligned load node index into 512-bit vector
+        __m512i input = _mm512_load_epi32(vec32);
+
+        // clear the lower nibbles of the input vector
+        input = _mm512_and_epi32(_mm512_set1_epi32(0xfffffff0), input);
+
+        // compute not equals mask: non zero 32-bit lanes are 1 in the mask
+        __mmask16 mask = _mm512_cmp_epi32_mask(input, _mm512_setzero_epi32(), _MM_CMPINT_NE);
+
+        *p = vec32[imap__bsr__(mask)];
+
+    #if defined(_MSC_VER)
+        return __popcnt(mask);
+    #elif defined(__GNUC__)
+        return __builtin_popcount(mask);
+    #endif
+    }
+
     #define imap__packlo4__             imap__packlo4_simd__
     #define imap__unpacklo4__           imap__unpacklo4_simd__
+    #define imap__popcnthi28__          imap__popcnthi28_simd__
 
     #else
 
@@ -255,8 +277,26 @@ extern "C" {
         u.vec64[7] = (u.vec64[7] & ~0xf0000000full) | ((value >> 28) & 0xf0000000full);
     }
 
+    static inline
+    imap_u32_t imap__popcnthi28_port__(imap_u32_t vec32[16], imap_u32_t *p)
+    {
+        imap_u32_t pcnt = 0, sval, dirn;
+        *p = 0;
+        for (dirn = 0; 16 > dirn; dirn++)
+        {
+            sval = vec32[dirn];
+            if (sval & ~0xf)
+            {
+                *p = sval;
+                pcnt++;
+            }
+        }
+        return pcnt;
+    }
+
     #define imap__packlo4__             imap__packlo4_port__
     #define imap__unpacklo4__           imap__unpacklo4_port__
+    #define imap__popcnthi28__          imap__popcnthi28_port__
 
     #endif
 
@@ -326,18 +366,7 @@ extern "C" {
     static inline
     imap_u32_t imap__node_popcnt__(imap_node_t *node, imap_u32_t *p)
     {
-        imap_u32_t pcnt = 0, sval, dirn;
-        *p = 0;
-        for (dirn = 0; 16 > dirn; dirn++)
-        {
-            sval = node->vec32[dirn];
-            if (sval & ~0xf)
-            {
-                *p = sval;
-                pcnt++;
-            }
-        }
-        return pcnt;
+        return imap__popcnthi28__(node->vec32, p);
     }
 
     static inline
