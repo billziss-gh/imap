@@ -58,21 +58,21 @@ static void imap_primitives_test(void)
 
     memset(vec32, 0, sizeof vec32);
     val64 = 0xFEDCBA9876543210;
-    imap__unpacklo4__(vec32, val64);
-    val64 = imap__packlo4__(vec32);
+    imap__deposit_lo4__(vec32, val64);
+    val64 = imap__extract_lo4__(vec32);
     ASSERT(0xFEDCBA9876543210ull == val64);
 
     memset(vec32, 0, sizeof vec32);
-    ASSERT(0 == imap__popcnthi28__(vec32, &val32));
+    ASSERT(0 == imap__popcnt_hi28__(vec32, &val32));
     memset(vec32, 0, sizeof vec32);
     vec32[0] = 0xff;
-    ASSERT(1 == imap__popcnthi28__(vec32, &val32) && 0xff == val32);
+    ASSERT(1 == imap__popcnt_hi28__(vec32, &val32) && 0xff == val32);
     memset(vec32, 0, sizeof vec32);
     vec32[1] = 0xef, vec32[3] = 0xd0;
-    ASSERT(2 == imap__popcnthi28__(vec32, &val32));
+    ASSERT(2 == imap__popcnt_hi28__(vec32, &val32));
     memset(vec32, 0, sizeof vec32);
     vec32[3] = 0xd0;
-    ASSERT(1 == imap__popcnthi28__(vec32, &val32) && 0xd0 == val32);
+    ASSERT(1 == imap__popcnt_hi28__(vec32, &val32) && 0xd0 == val32);
 }
 
 static void imap_ensure_test(void)

@@ -175,7 +175,7 @@ extern "C" {
     #include <immintrin.h>
 
     static inline
-    imap_u64_t imap__packlo4_simd__(imap_u32_t vec32[16])
+    imap_u64_t imap__extract_lo4_simd__(imap_u32_t vec32[16])
     {
         __m512i vecmm = _mm512_load_epi32(vec32);
         vecmm = _mm512_and_epi32(vecmm, _mm512_set1_epi32(0xf));
@@ -184,7 +184,7 @@ extern "C" {
     }
 
     static inline
-    void imap__unpacklo4_simd__(imap_u32_t vec32[16], imap_u64_t value)
+    void imap__deposit_lo4_simd__(imap_u32_t vec32[16], imap_u64_t value)
     {
         __m512i vecmm = _mm512_load_epi32(vec32);
         __m512i valmm = _mm512_set1_epi64(value);
@@ -196,7 +196,7 @@ extern "C" {
     }
 
     static inline
-    imap_u32_t imap__popcnthi28_simd__(imap_u32_t vec32[16], imap_u32_t *p)
+    imap_u32_t imap__popcnt_hi28_simd__(imap_u32_t vec32[16], imap_u32_t *p)
     {
         __m512i vecmm = _mm512_load_epi32(vec32);
         vecmm = _mm512_and_epi32(vecmm, _mm512_set1_epi32(~0xf));
@@ -209,14 +209,14 @@ extern "C" {
     #endif
     }
 
-    #define imap__packlo4__             imap__packlo4_simd__
-    #define imap__unpacklo4__           imap__unpacklo4_simd__
-    #define imap__popcnthi28__          imap__popcnthi28_simd__
+    #define imap__extract_lo4__         imap__extract_lo4_simd__
+    #define imap__deposit_lo4__         imap__deposit_lo4_simd__
+    #define imap__popcnt_hi28__         imap__popcnt_hi28_simd__
 
     #else
 
     static inline
-    imap_u64_t imap__packlo4_port__(imap_u32_t vec32[16])
+    imap_u64_t imap__extract_lo4_port__(imap_u32_t vec32[16])
     {
         union
         {
@@ -236,7 +236,7 @@ extern "C" {
     }
 
     static inline
-    void imap__unpacklo4_port__(imap_u32_t vec32[16], imap_u64_t value)
+    void imap__deposit_lo4_port__(imap_u32_t vec32[16], imap_u64_t value)
     {
         union
         {
@@ -255,7 +255,7 @@ extern "C" {
     }
 
     static inline
-    imap_u32_t imap__popcnthi28_port__(imap_u32_t vec32[16], imap_u32_t *p)
+    imap_u32_t imap__popcnt_hi28_port__(imap_u32_t vec32[16], imap_u32_t *p)
     {
         imap_u32_t pcnt = 0, sval, dirn;
         *p = 0;
@@ -271,9 +271,9 @@ extern "C" {
         return pcnt;
     }
 
-    #define imap__packlo4__             imap__packlo4_port__
-    #define imap__unpacklo4__           imap__unpacklo4_port__
-    #define imap__popcnthi28__          imap__popcnthi28_port__
+    #define imap__extract_lo4__         imap__extract_lo4_port__
+    #define imap__deposit_lo4__         imap__deposit_lo4_port__
+    #define imap__popcnt_hi28__         imap__popcnt_hi28_port__
 
     #endif
 
@@ -325,13 +325,13 @@ extern "C" {
     static inline
     imap_u64_t imap__node_prefix__(imap_node_t *node)
     {
-        return imap__packlo4__(node->vec32);
+        return imap__extract_lo4__(node->vec32);
     }
 
     static inline
     void imap__node_setprefix__(imap_node_t *node, imap_u64_t prefix)
     {
-        imap__unpacklo4__(node->vec32, prefix);
+        imap__deposit_lo4__(node->vec32, prefix);
     }
 
     static inline
@@ -343,7 +343,7 @@ extern "C" {
     static inline
     imap_u32_t imap__node_popcnt__(imap_node_t *node, imap_u32_t *p)
     {
-        return imap__popcnthi28__(node->vec32, p);
+        return imap__popcnt_hi28__(node->vec32, p);
     }
 
     static inline
