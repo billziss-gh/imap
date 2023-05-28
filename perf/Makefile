@@ -10,6 +10,6 @@ else
 bench: bench.out
 	./bench.out $(BENCH_CMDLINE)
 bench.out: ../imap.h bench.cpp wrap.cpp
-	g++ -I.. -DIMAP_USE_SIMD -march=native -Wall -Wstrict-aliasing=1 -O3 -flto=none -std=c++17 -x c++ bench.cpp wrap.cpp -x c ../tlib/testsuite.c -o $@
+	g++ -I.. -DIMAP_USE_SIMD -mavx512f -Wall -Wstrict-aliasing=1 -O3 -flto=none -std=c++17 -x c++ bench.cpp wrap.cpp -x c ../tlib/testsuite.c -o $@
 
 endif

@@ -177,54 +177,31 @@ extern "C" {
     static inline
     imap_u64_t imap__packlo4_simd__(imap_u32_t vec32[16])
     {
-        // aligned load node index into 512-bit vector
-        __m512i input = _mm512_load_epi32(vec32);
-
-        // set index to bits 0,1,2,3,32,33,34,35; corresponds to the lower nibbles of 2 u32_t's
-        __m512i index = _mm512_set1_epi64(0x2322212003020100);
-
-        // bitshuffle according to the index and return the result
-        return _mm512_bitshuffle_epi64_mask(input, index);
+        __m512i vecmm = _mm512_load_epi32(vec32);
+        vecmm = _mm512_and_epi32(vecmm, _mm512_set1_epi32(0xf));
+        vecmm = _mm512_sllv_epi64(vecmm, _mm512_setr_epi64(0, 4, 8, 12, 16, 20, 24, 28));
+        return _mm512_reduce_add_epi64(vecmm);
     }
 
     static inline
     void imap__unpacklo4_simd__(imap_u32_t vec32[16], imap_u64_t value)
     {
-        // aligned load node index into 512-bit vector
-        __m512i input = _mm512_load_epi32(vec32);
-
-        // prepare the lower and upper nibbles of the 64-bit value
-        __m128i valu0 = _mm_set1_epi64x(value & 0x0f0f0f0f0f0f0f0full);
-        __m128i valu1 = _mm_set1_epi64x((value >> 4) & 0x0f0f0f0f0f0f0f0full);
-
-        // unpack 64-bit value into the lower nibbles of the 32-bit lanes of a 512-bit vector
-        __m512i nibb0 = _mm512_cvtepu8_epi64(valu0);
-        __m512i nibb1 = _mm512_slli_epi64(_mm512_cvtepu8_epi64(valu1), 32);
-
-        // clear the lower nibbles of the input vector
-        input = _mm512_and_epi32(_mm512_set1_epi32(0xfffffff0), input);
-
-        // update the input vector with the result of OR'ing the input and the nibbles
-        input = _mm512_ternarylogic_epi32(input, nibb0, nibb1, 0xfe/* OR ALL */);
-
-        // aligned store the updated vector back into the node index
-        _mm512_store_epi32(vec32, input);
+        __m512i vecmm = _mm512_load_epi32(vec32);
+        __m512i valmm = _mm512_set1_epi64(value);
+        vecmm = _mm512_and_epi32(vecmm, _mm512_set1_epi32(~0xf));
+        valmm = _mm512_srlv_epi64(valmm, _mm512_setr_epi64(0, 4, 8, 12, 16, 20, 24, 28));
+        valmm = _mm512_and_epi32(valmm, _mm512_set1_epi32(0xf));
+        vecmm = _mm512_or_epi32(vecmm, valmm);
+        _mm512_store_epi32(vec32, vecmm);
     }
 
     static inline
     imap_u32_t imap__popcnthi28_simd__(imap_u32_t vec32[16], imap_u32_t *p)
     {
-        // aligned load node index into 512-bit vector
-        __m512i input = _mm512_load_epi32(vec32);
-
-        // clear the lower nibbles of the input vector
-        input = _mm512_and_epi32(_mm512_set1_epi32(0xfffffff0), input);
-
-        // compute not equals mask: non zero 32-bit lanes are 1 in the mask
-        __mmask16 mask = _mm512_cmp_epi32_mask(input, _mm512_setzero_epi32(), _MM_CMPINT_NE);
-
+        __m512i vecmm = _mm512_load_epi32(vec32);
+        vecmm = _mm512_and_epi32(vecmm, _mm512_set1_epi32(~0xf));
+        __mmask16 mask = _mm512_cmp_epi32_mask(vecmm, _mm512_setzero_epi32(), _MM_CMPINT_NE);
         *p = vec32[imap__bsr__(mask)];
-
     #if defined(_MSC_VER)
         return __popcnt(mask);
     #elif defined(__GNUC__)
