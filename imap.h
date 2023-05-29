@@ -177,15 +177,29 @@ extern "C" {
     static inline
     imap_u64_t imap__extract_lo4_simd__(imap_u32_t vec32[16])
     {
+    #if IMAP_USE_SIMD == 512
         __m512i vecmm = _mm512_load_epi32(vec32);
         vecmm = _mm512_and_epi32(vecmm, _mm512_set1_epi32(0xf));
         vecmm = _mm512_sllv_epi64(vecmm, _mm512_setr_epi64(0, 4, 8, 12, 16, 20, 24, 28));
         return _mm512_reduce_add_epi64(vecmm);
+    #else
+        __m256i veclo = _mm256_load_si256((__m256i *)vec32);
+        __m256i vechi = _mm256_load_si256((__m256i *)(vec32 + 8));
+        __m256i mskmm = _mm256_set1_epi32(0xf);
+        veclo = _mm256_and_si256(veclo, mskmm);
+        vechi = _mm256_and_si256(vechi, mskmm);
+        veclo = _mm256_sllv_epi64(veclo, _mm256_setr_epi64x(0, 4, 8, 12));
+        vechi = _mm256_sllv_epi64(vechi, _mm256_setr_epi64x(16, 20, 24, 28));
+        veclo = _mm256_add_epi64(veclo, vechi);
+        veclo = _mm256_add_epi64(veclo, _mm256_permute4x64_epi64(veclo, _MM_SHUFFLE(0, 1, 2, 3)));
+        return _mm256_extract_epi64(veclo, 0) + _mm256_extract_epi64(veclo, 1);
+    #endif
     }
 
     static inline
     void imap__deposit_lo4_simd__(imap_u32_t vec32[16], imap_u64_t value)
     {
+    #if IMAP_USE_SIMD == 512
         __m512i vecmm = _mm512_load_epi32(vec32);
         __m512i valmm = _mm512_set1_epi64(value);
         vecmm = _mm512_and_epi32(vecmm, _mm512_set1_epi32(~0xf));
@@ -193,11 +207,29 @@ extern "C" {
         valmm = _mm512_and_epi32(valmm, _mm512_set1_epi32(0xf));
         vecmm = _mm512_or_epi32(vecmm, valmm);
         _mm512_store_epi32(vec32, vecmm);
+    #else
+        __m256i veclo = _mm256_load_si256((__m256i *)vec32);
+        __m256i vechi = _mm256_load_si256((__m256i *)(vec32 + 8));
+        __m256i vallo, valhi = _mm256_set1_epi64x(value);
+        __m256i invmm = _mm256_set1_epi32(~0xf);
+        veclo = _mm256_and_si256(veclo, invmm);
+        vechi = _mm256_and_si256(vechi, invmm);
+        vallo = _mm256_srlv_epi64(valhi, _mm256_setr_epi64x(0, 4, 8, 12));
+        valhi = _mm256_srlv_epi64(valhi, _mm256_setr_epi64x(16, 20, 24, 28));
+        __m256i mskmm = _mm256_set1_epi32(0xf);
+        vallo = _mm256_and_si256(vallo, mskmm);
+        valhi = _mm256_and_si256(valhi, mskmm);
+        veclo = _mm256_or_si256(veclo, vallo);
+        vechi = _mm256_or_si256(vechi, valhi);
+        _mm256_store_si256((__m256i *)vec32, veclo);
+        _mm256_store_si256((__m256i *)(vec32 + 8), vechi);
+    #endif
     }
 
     static inline
     imap_u32_t imap__popcnt_hi28_simd__(imap_u32_t vec32[16], imap_u32_t *p)
     {
+    #if IMAP_USE_SIMD == 512
         __m512i vecmm = _mm512_load_epi32(vec32);
         vecmm = _mm512_and_epi32(vecmm, _mm512_set1_epi32(~0xf));
         __mmask16 mask = _mm512_cmp_epi32_mask(vecmm, _mm512_setzero_epi32(), _MM_CMPINT_NE);
@@ -206,6 +238,27 @@ extern "C" {
         return __popcnt(mask);
     #elif defined(__GNUC__)
         return __builtin_popcount(mask);
+    #endif
+    #else
+        __m256i veclo = _mm256_load_si256((__m256i *)vec32);
+        __m256i vechi = _mm256_load_si256((__m256i *)(vec32 + 8));
+        __m256i invmm = _mm256_set1_epi32(~0xf);
+        veclo = _mm256_and_si256(veclo, invmm);
+        vechi = _mm256_and_si256(vechi, invmm);
+        __m256i zermm = _mm256_setzero_si256();
+        __m256i cmplo = _mm256_cmpeq_epi32(veclo, zermm);
+        __m256i cmphi = _mm256_cmpeq_epi32(vechi, zermm);
+        imap_u32_t msklo = _mm256_movemask_epi8(cmplo);
+        imap_u32_t mskhi = _mm256_movemask_epi8(cmphi);
+        imap_u64_t msk64 = (imap_u64_t)msklo | ((imap_u64_t)mskhi << 32);
+        msk64 = ~msk64;
+        msk64 &= 0x1111111111111111ull;
+        *p = vec32[imap__bsr__(msk64) >> 2];
+    #if defined(_MSC_VER)
+        return (imap_u32_t)__popcnt64(msk64);
+    #elif defined(__GNUC__)
+        return __builtin_popcount(msk64);
+    #endif
     #endif
     }
 
