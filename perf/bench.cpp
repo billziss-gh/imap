@@ -12,6 +12,7 @@
 
 #include <tlib/testsuite.h>
 #include <time.h>
+#include <memory>
 #include <map>
 #include <unordered_map>
 #include "imap.h"
@@ -242,6 +243,76 @@ static void stdm_shortseq_test(void)
     }
 }
 
+static size_t memtrack_total = 0;
+template <typename T>
+class memtrack_allocator
+{
+public:
+    using value_type = T;
+    memtrack_allocator()
+    {
+    }
+    template <typename U>
+    memtrack_allocator(const memtrack_allocator<U> &other)
+    {
+    }
+    T *allocate(std::size_t size)
+    {
+        memtrack_total += sizeof(T) * size;
+        return (T *)malloc(sizeof(T) * size);
+    }
+    void deallocate(T *p, std::size_t size)
+    {
+        memtrack_total -= sizeof(T) * size;
+        free(p);
+    }
+};
+
+static void imap_memtrack_test(void)
+{
+    imap_node_t *t = imap_ensure(0, +1);
+
+    for (unsigned i = 0; N > i; i++)
+        test_imap_insert(t, i, i);
+
+    tlib_printf("%u/%u ", t->vec32[imap__tree_mark__], t->vec32[imap__tree_size__]);
+
+    imap_free(t);
+}
+
+static void stdu_memtrack_test(void)
+{
+    IMAP_ASSERT(memtrack_total == 0);
+
+    std::unordered_map<
+        imap_u64_t,
+        imap_u64_t,
+        std::hash<uint64_t>,
+        std::equal_to<uint64_t>,
+        memtrack_allocator<std::pair<const imap_u64_t, imap_u64_t>>> u;
+
+    for (unsigned i = 0; N > i; i++)
+        u.emplace(i, i);
+
+    tlib_printf("%llu ", (unsigned long long)memtrack_total);
+}
+
+static void stdm_memtrack_test(void)
+{
+    IMAP_ASSERT(memtrack_total == 0);
+
+    std::map<
+        imap_u64_t,
+        imap_u64_t,
+        std::less<uint64_t>,
+        memtrack_allocator<std::pair<const imap_u64_t, imap_u64_t>>> m;
+
+    for (unsigned i = 0; N > i; i++)
+        m.emplace(i, i);
+
+    tlib_printf("%llu ", (unsigned long long)memtrack_total);
+}
+
 void perf_tests(void)
 {
     TEST(imap_seq_insert_test);
@@ -271,6 +342,9 @@ void perf_tests(void)
     TEST(imap_shortseq_test);
     TEST(stdu_shortseq_test);
     TEST_OPT(stdm_shortseq_test);
+    TEST(imap_memtrack_test);
+    TEST(stdu_memtrack_test);
+    TEST_OPT(stdm_memtrack_test);
 }
 
 int main(int argc, char **argv)
