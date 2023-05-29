@@ -34,6 +34,7 @@ imap_u64_t test_stdm_lookup(std::map<imap_u64_t, imap_u64_t> &stdm, imap_u64_t x
 
 static const unsigned N = 10000000;
 static imap_node_t *tree = imap_ensure(0, +1);
+static imap_node_t *trbv = imap_ensure(0, +1);
 static std::unordered_map<imap_u64_t, imap_u64_t> stdu;
 static std::map<imap_u64_t, imap_u64_t> stdm;
 
@@ -76,6 +77,30 @@ static void imap_seq_remove_test(void)
 {
     for (unsigned i = 0; N > i; i++)
         test_imap_remove(tree, i);
+}
+
+static void imbv_seq_insert_test(void)
+{
+    for (unsigned i = 0; N > i; i++)
+        test_imap_insert(trbv, i, 0x8000000000000000ull | i);
+}
+
+static void imbv_seq_assign_test(void)
+{
+    for (unsigned i = 0; N > i; i++)
+        test_imap_assign(trbv, i, 0x8000000000000000ull | i);
+}
+
+static void imbv_seq_lookup_test(void)
+{
+    for (unsigned i = 0; N > i; i++)
+        test_imap_lookup(trbv, i);
+}
+
+static void imbv_seq_remove_test(void)
+{
+    for (unsigned i = 0; N > i; i++)
+        test_imap_remove(trbv, i);
 }
 
 static void imap_rnd_insert_test(void)
@@ -280,6 +305,18 @@ static void imap_memtrack_test(void)
     imap_free(t);
 }
 
+static void imbv_memtrack_test(void)
+{
+    imap_node_t *t = imap_ensure(0, +1);
+
+    for (unsigned i = 0; N > i; i++)
+        test_imap_insert(t, i, 0x8000000000000000ull | i);
+
+    tlib_printf("%u/%u ", t->vec32[imap__tree_mark__], t->vec32[imap__tree_size__]);
+
+    imap_free(t);
+}
+
 static void stdu_memtrack_test(void)
 {
     IMAP_ASSERT(memtrack_total == 0);
@@ -316,15 +353,19 @@ static void stdm_memtrack_test(void)
 void perf_tests(void)
 {
     TEST(imap_seq_insert_test);
+    TEST_OPT(imbv_seq_insert_test);
     TEST(stdu_seq_insert_test);
     TEST_OPT(stdm_seq_insert_test);
     TEST(imap_seq_assign_test);
+    TEST_OPT(imbv_seq_assign_test);
     TEST(stdu_seq_assign_test);
     TEST_OPT(stdm_seq_assign_test);
     TEST(imap_seq_lookup_test);
+    TEST_OPT(imbv_seq_lookup_test);
     TEST(stdu_seq_lookup_test);
     TEST_OPT(stdm_seq_lookup_test);
     TEST(imap_seq_remove_test);
+    TEST_OPT(imbv_seq_remove_test);
     TEST(stdu_seq_remove_test);
     TEST_OPT(stdm_seq_remove_test);
     TEST(imap_rnd_insert_test);
@@ -343,6 +384,7 @@ void perf_tests(void)
     TEST(stdu_shortseq_test);
     TEST_OPT(stdm_shortseq_test);
     TEST(imap_memtrack_test);
+    TEST_OPT(imbv_memtrack_test);
     TEST(stdu_memtrack_test);
     TEST_OPT(stdm_memtrack_test);
 }
