@@ -516,9 +516,10 @@ extern "C" {
             sval = *slot;
             if (!(sval & imap__slot_node__))
             {
-                if (!(sval & imap__slot_value__) || 0 != posn ||
+                if (!(sval & imap__slot_value__) ||
                     imap__node_prefix__(node) != (x & ~0xfull))
                     return 0;
+                IMAP_ASSERT(0 == posn);
                 return slot;
             }
             node = imap__node__(tree, sval & imap__slot_value__);
