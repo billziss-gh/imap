@@ -10,7 +10,7 @@ The proposed data structure is a compressive, cache-friendly, radix tree that at
 
 The need to maintain an integer map arises often in programming. Often the integers are used to represent other entities such as symbols (e.g. a `sym->sym` symbolic map), file handles/descriptors (e.g. a `handle->pointer` file map), pointers (e.g. a `pointer->pointer` object map), etc. Integer maps can also be used as a building block for integer sets, floating point maps, interval maps, etc.
 
-If the map is **unordered** and does not need to support a fast _successor_ or _iterate_ operation then usually the best data structure is a hash table employing an open addressing scheme. However there is often a need for **ordered** integer maps with support for a fast _successor_ or _iterate_ operation in natural numeric order. The obvious choice is a tree data structure such as the one provided by `std::map`, which unfortunately do not always have the best performance. Radix trees are an improvement and some forms of radix trees like [crit-bit trees](https://cr.yp.to/critbit.html) can perform better.
+If the map is **unordered** and does not need to support a fast _successor_ or _iterate_ operation then usually the best data structure is a hash table employing an open addressing scheme. However there is often a need for **ordered** integer maps with support for a fast _successor_ or _iterate_ operation in natural numeric order. The obvious choice is a tree data structure such as the one provided by `std::map`, which unfortunately does not always have the best performance. Radix trees are an improvement and some forms of radix trees like [crit-bit trees](https://cr.yp.to/critbit.html) can perform better.
 
 The proposed data structure is a radix tree that instead of using a single bit to make a decision whether to go left or right in the tree, it uses 4 bits to pick one of 16 directions. The data structure employs a compression scheme for internal pointers and stored values and is laid out in a cache-friendly manner. These properties have the effect of creating a time and space efficient data structure.
 
@@ -360,7 +360,7 @@ The environments are:
 
 In the graphs below `imap` stands for this data structure, `imbv` stands for this data structure but with a modified test so that it cannot use its _y_ value compression scheme, `stdu` stands for `std::unordered_map` and `stdm` stands for `std::map`. All times are normalized against the `imap` time on each system (so that the `imap` test "time" is always 1.0 and if a particular test took twice as much time as `imap` then its "time" would be 2.0).
 
-The `imap` data structure was compiled with `IMAP_USE_SIMD` which enables use of AVX2. Further improvements are possible by compiling with `IMAP_USE_SIMD=512` which enables use of AVX512, but this was not done for these performance comparisons as AVX512 is still not prevalent at the time of this writing.
+The `imap` data structure was compiled with `IMAP_USE_SIMD` which enables use of AVX2. Further improvements are possible by compiling with `IMAP_USE_SIMD=512` which enables use of AVX512, but this was not done in these tests as AVX512 is still not prevalent at the time of this writing.
 
 ### Performance Tests
 

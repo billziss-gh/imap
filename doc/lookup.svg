@@ -12,39 +12,39 @@
 <!-- 80 -->
 <g id="node1" class="node">
 <title>80</title>
-<polygon fill="none" stroke="black" points="306,-346.5 306,-392.5 706,-392.5 706,-346.5 306,-346.5"/>
+<polygon fill="none" stroke="red" stroke-width="2" points="306,-346.5 306,-392.5 706,-392.5 706,-346.5 306,-346.5"/>
 <text text-anchor="middle" x="506" y="-377.3" font-family="monospace" font-size="14.00">00000000a0000000 / 3</text>
-<polyline fill="none" stroke="black" points="306,-369.5 706,-369.5 "/>
+<polyline fill="none" stroke="red" stroke-width="2" points="306,-369.5 706,-369.5 "/>
 <text text-anchor="middle" x="318.5" y="-354.3" font-family="monospace" font-size="14.00">0</text>
-<polyline fill="none" stroke="black" points="331,-346.5 331,-369.5 "/>
+<polyline fill="none" stroke="red" stroke-width="2" points="331,-346.5 331,-369.5 "/>
 <text text-anchor="middle" x="343.5" y="-354.3" font-family="monospace" font-size="14.00">1</text>
-<polyline fill="none" stroke="black" points="356,-346.5 356,-369.5 "/>
+<polyline fill="none" stroke="red" stroke-width="2" points="356,-346.5 356,-369.5 "/>
 <text text-anchor="middle" x="368.5" y="-354.3" font-family="monospace" font-size="14.00">2</text>
-<polyline fill="none" stroke="black" points="381,-346.5 381,-369.5 "/>
+<polyline fill="none" stroke="red" stroke-width="2" points="381,-346.5 381,-369.5 "/>
 <text text-anchor="middle" x="393.5" y="-354.3" font-family="monospace" font-size="14.00">3</text>
-<polyline fill="none" stroke="black" points="406,-346.5 406,-369.5 "/>
+<polyline fill="none" stroke="red" stroke-width="2" points="406,-346.5 406,-369.5 "/>
 <text text-anchor="middle" x="418.5" y="-354.3" font-family="monospace" font-size="14.00">4</text>
-<polyline fill="none" stroke="black" points="431,-346.5 431,-369.5 "/>
+<polyline fill="none" stroke="red" stroke-width="2" points="431,-346.5 431,-369.5 "/>
 <text text-anchor="middle" x="443.5" y="-354.3" font-family="monospace" font-size="14.00">5</text>
-<polyline fill="none" stroke="black" points="456,-346.5 456,-369.5 "/>
+<polyline fill="none" stroke="red" stroke-width="2" points="456,-346.5 456,-369.5 "/>
 <text text-anchor="middle" x="468.5" y="-354.3" font-family="monospace" font-size="14.00">6</text>
-<polyline fill="none" stroke="black" points="481,-346.5 481,-369.5 "/>
+<polyline fill="none" stroke="red" stroke-width="2" points="481,-346.5 481,-369.5 "/>
 <text text-anchor="middle" x="493.5" y="-354.3" font-family="monospace" font-size="14.00">7</text>
-<polyline fill="none" stroke="black" points="506,-346.5 506,-369.5 "/>
+<polyline fill="none" stroke="red" stroke-width="2" points="506,-346.5 506,-369.5 "/>
 <text text-anchor="middle" x="518.5" y="-354.3" font-family="monospace" font-size="14.00">8</text>
-<polyline fill="none" stroke="black" points="531,-346.5 531,-369.5 "/>
+<polyline fill="none" stroke="red" stroke-width="2" points="531,-346.5 531,-369.5 "/>
 <text text-anchor="middle" x="543.5" y="-354.3" font-family="monospace" font-size="14.00">9</text>
-<polyline fill="none" stroke="black" points="556,-346.5 556,-369.5 "/>
+<polyline fill="none" stroke="red" stroke-width="2" points="556,-346.5 556,-369.5 "/>
 <text text-anchor="middle" x="568.5" y="-354.3" font-family="monospace" font-size="14.00">A</text>
-<polyline fill="none" stroke="black" points="581,-346.5 581,-369.5 "/>
+<polyline fill="none" stroke="red" stroke-width="2" points="581,-346.5 581,-369.5 "/>
 <text text-anchor="middle" x="593.5" y="-354.3" font-family="monospace" font-size="14.00">B</text>
-<polyline fill="none" stroke="black" points="606,-346.5 606,-369.5 "/>
+<polyline fill="none" stroke="red" stroke-width="2" points="606,-346.5 606,-369.5 "/>
 <text text-anchor="middle" x="618.5" y="-354.3" font-family="monospace" font-size="14.00">C</text>
-<polyline fill="none" stroke="black" points="631,-346.5 631,-369.5 "/>
+<polyline fill="none" stroke="red" stroke-width="2" points="631,-346.5 631,-369.5 "/>
 <text text-anchor="middle" x="643.5" y="-354.3" font-family="monospace" font-size="14.00">D</text>
-<polyline fill="none" stroke="black" points="656,-346.5 656,-369.5 "/>
+<polyline fill="none" stroke="red" stroke-width="2" points="656,-346.5 656,-369.5 "/>
 <text text-anchor="middle" x="668.5" y="-354.3" font-family="monospace" font-size="14.00">E</text>
-<polyline fill="none" stroke="black" points="681,-346.5 681,-369.5 "/>
+<polyline fill="none" stroke="red" stroke-width="2" points="681,-346.5 681,-369.5 "/>
 <text text-anchor="middle" x="693.5" y="-354.3" font-family="monospace" font-size="14.00">F</text>
 </g>
 <!-- 40 -->
@@ -94,39 +94,39 @@
 <!-- 100 -->
 <g id="node3" class="node">
 <title>100</title>
-<polygon fill="none" stroke="black" points="593,-227.5 593,-273.5 993,-273.5 993,-227.5 593,-227.5"/>
+<polygon fill="none" stroke="red" stroke-width="2" points="593,-227.5 593,-273.5 993,-273.5 993,-227.5 593,-227.5"/>
 <text text-anchor="middle" x="793" y="-258.3" font-family="monospace" font-size="14.00">00000000a0008000 / 1</text>
-<polyline fill="none" stroke="black" points="593,-250.5 993,-250.5 "/>
+<polyline fill="none" stroke="red" stroke-width="2" points="593,-250.5 993,-250.5 "/>
 <text text-anchor="middle" x="605.5" y="-235.3" font-family="monospace" font-size="14.00">0</text>
-<polyline fill="none" stroke="black" points="618,-227.5 618,-250.5 "/>
+<polyline fill="none" stroke="red" stroke-width="2" points="618,-227.5 618,-250.5 "/>
 <text text-anchor="middle" x="630.5" y="-235.3" font-family="monospace" font-size="14.00">1</text>
-<polyline fill="none" stroke="black" points="643,-227.5 643,-250.5 "/>
+<polyline fill="none" stroke="red" stroke-width="2" points="643,-227.5 643,-250.5 "/>
 <text text-anchor="middle" x="655.5" y="-235.3" font-family="monospace" font-size="14.00">2</text>
-<polyline fill="none" stroke="black" points="668,-227.5 668,-250.5 "/>
+<polyline fill="none" stroke="red" stroke-width="2" points="668,-227.5 668,-250.5 "/>
 <text text-anchor="middle" x="680.5" y="-235.3" font-family="monospace" font-size="14.00">3</text>
-<polyline fill="none" stroke="black" points="693,-227.5 693,-250.5 "/>
+<polyline fill="none" stroke="red" stroke-width="2" points="693,-227.5 693,-250.5 "/>
 <text text-anchor="middle" x="705.5" y="-235.3" font-family="monospace" font-size="14.00">4</text>
-<polyline fill="none" stroke="black" points="718,-227.5 718,-250.5 "/>
+<polyline fill="none" stroke="red" stroke-width="2" points="718,-227.5 718,-250.5 "/>
 <text text-anchor="middle" x="730.5" y="-235.3" font-family="monospace" font-size="14.00">5</text>
-<polyline fill="none" stroke="black" points="743,-227.5 743,-250.5 "/>
+<polyline fill="none" stroke="red" stroke-width="2" points="743,-227.5 743,-250.5 "/>
 <text text-anchor="middle" x="755.5" y="-235.3" font-family="monospace" font-size="14.00">6</text>
-<polyline fill="none" stroke="black" points="768,-227.5 768,-250.5 "/>
+<polyline fill="none" stroke="red" stroke-width="2" points="768,-227.5 768,-250.5 "/>
 <text text-anchor="middle" x="780.5" y="-235.3" font-family="monospace" font-size="14.00">7</text>
-<polyline fill="none" stroke="black" points="793,-227.5 793,-250.5 "/>
+<polyline fill="none" stroke="red" stroke-width="2" points="793,-227.5 793,-250.5 "/>
 <text text-anchor="middle" x="805.5" y="-235.3" font-family="monospace" font-size="14.00">8</text>
-<polyline fill="none" stroke="black" points="818,-227.5 818,-250.5 "/>
+<polyline fill="none" stroke="red" stroke-width="2" points="818,-227.5 818,-250.5 "/>
 <text text-anchor="middle" x="830.5" y="-235.3" font-family="monospace" font-size="14.00">9</text>
-<polyline fill="none" stroke="black" points="843,-227.5 843,-250.5 "/>
+<polyline fill="none" stroke="red" stroke-width="2" points="843,-227.5 843,-250.5 "/>
 <text text-anchor="middle" x="855.5" y="-235.3" font-family="monospace" font-size="14.00">A</text>
-<polyline fill="none" stroke="black" points="868,-227.5 868,-250.5 "/>
+<polyline fill="none" stroke="red" stroke-width="2" points="868,-227.5 868,-250.5 "/>
 <text text-anchor="middle" x="880.5" y="-235.3" font-family="monospace" font-size="14.00">B</text>
-<polyline fill="none" stroke="black" points="893,-227.5 893,-250.5 "/>
+<polyline fill="none" stroke="red" stroke-width="2" points="893,-227.5 893,-250.5 "/>
 <text text-anchor="middle" x="905.5" y="-235.3" font-family="monospace" font-size="14.00">C</text>
-<polyline fill="none" stroke="black" points="918,-227.5 918,-250.5 "/>
+<polyline fill="none" stroke="red" stroke-width="2" points="918,-227.5 918,-250.5 "/>
 <text text-anchor="middle" x="930.5" y="-235.3" font-family="monospace" font-size="14.00">D</text>
-<polyline fill="none" stroke="black" points="943,-227.5 943,-250.5 "/>
+<polyline fill="none" stroke="red" stroke-width="2" points="943,-227.5 943,-250.5 "/>
 <text text-anchor="middle" x="955.5" y="-235.3" font-family="monospace" font-size="14.00">E</text>
-<polyline fill="none" stroke="black" points="968,-227.5 968,-250.5 "/>
+<polyline fill="none" stroke="red" stroke-width="2" points="968,-227.5 968,-250.5 "/>
 <text text-anchor="middle" x="980.5" y="-235.3" font-family="monospace" font-size="14.00">F</text>
 </g>
 <!-- 80&#45;&gt;100 -->
@@ -162,39 +162,39 @@
 <!-- c0 -->
 <g id="node6" class="node">
 <title>c0</title>
-<polygon fill="none" stroke="black" points="250,-108.5 250,-154.5 650,-154.5 650,-108.5 250,-108.5"/>
+<polygon fill="none" stroke="red" stroke-width="2" points="250,-108.5 250,-154.5 650,-154.5 650,-108.5 250,-108.5"/>
 <text text-anchor="middle" x="450" y="-139.3" font-family="monospace" font-size="14.00">00000000a0008000 / 0</text>
-<polyline fill="none" stroke="black" points="250,-131.5 650,-131.5 "/>
+<polyline fill="none" stroke="red" stroke-width="2" points="250,-131.5 650,-131.5 "/>
 <text text-anchor="middle" x="262.5" y="-116.3" font-family="monospace" font-size="14.00">0</text>
-<polyline fill="none" stroke="black" points="275,-108.5 275,-131.5 "/>
+<polyline fill="none" stroke="red" stroke-width="2" points="275,-108.5 275,-131.5 "/>
 <text text-anchor="middle" x="287.5" y="-116.3" font-family="monospace" font-size="14.00">1</text>
-<polyline fill="none" stroke="black" points="300,-108.5 300,-131.5 "/>
+<polyline fill="none" stroke="red" stroke-width="2" points="300,-108.5 300,-131.5 "/>
 <text text-anchor="middle" x="312.5" y="-116.3" font-family="monospace" font-size="14.00">2</text>
-<polyline fill="none" stroke="black" points="325,-108.5 325,-131.5 "/>
+<polyline fill="none" stroke="red" stroke-width="2" points="325,-108.5 325,-131.5 "/>
 <text text-anchor="middle" x="337.5" y="-116.3" font-family="monospace" font-size="14.00">3</text>
-<polyline fill="none" stroke="black" points="350,-108.5 350,-131.5 "/>
+<polyline fill="none" stroke="red" stroke-width="2" points="350,-108.5 350,-131.5 "/>
 <text text-anchor="middle" x="362.5" y="-116.3" font-family="monospace" font-size="14.00">4</text>
-<polyline fill="none" stroke="black" points="375,-108.5 375,-131.5 "/>
+<polyline fill="none" stroke="red" stroke-width="2" points="375,-108.5 375,-131.5 "/>
 <text text-anchor="middle" x="387.5" y="-116.3" font-family="monospace" font-size="14.00">5</text>
-<polyline fill="none" stroke="black" points="400,-108.5 400,-131.5 "/>
+<polyline fill="none" stroke="red" stroke-width="2" points="400,-108.5 400,-131.5 "/>
 <text text-anchor="middle" x="412.5" y="-116.3" font-family="monospace" font-size="14.00">6</text>
-<polyline fill="none" stroke="black" points="425,-108.5 425,-131.5 "/>
+<polyline fill="none" stroke="red" stroke-width="2" points="425,-108.5 425,-131.5 "/>
 <text text-anchor="middle" x="437.5" y="-116.3" font-family="monospace" font-size="14.00">7</text>
-<polyline fill="none" stroke="black" points="450,-108.5 450,-131.5 "/>
+<polyline fill="none" stroke="red" stroke-width="2" points="450,-108.5 450,-131.5 "/>
 <text text-anchor="middle" x="462.5" y="-116.3" font-family="monospace" font-size="14.00">8</text>
-<polyline fill="none" stroke="black" points="475,-108.5 475,-131.5 "/>
+<polyline fill="none" stroke="red" stroke-width="2" points="475,-108.5 475,-131.5 "/>
 <text text-anchor="middle" x="487.5" y="-116.3" font-family="monospace" font-size="14.00">9</text>
-<polyline fill="none" stroke="black" points="500,-108.5 500,-131.5 "/>
+<polyline fill="none" stroke="red" stroke-width="2" points="500,-108.5 500,-131.5 "/>
 <text text-anchor="middle" x="512.5" y="-116.3" font-family="monospace" font-size="14.00">A</text>
-<polyline fill="none" stroke="black" points="525,-108.5 525,-131.5 "/>
+<polyline fill="none" stroke="red" stroke-width="2" points="525,-108.5 525,-131.5 "/>
 <text text-anchor="middle" x="537.5" y="-116.3" font-family="monospace" font-size="14.00">B</text>
-<polyline fill="none" stroke="black" points="550,-108.5 550,-131.5 "/>
+<polyline fill="none" stroke="red" stroke-width="2" points="550,-108.5 550,-131.5 "/>
 <text text-anchor="middle" x="562.5" y="-116.3" font-family="monospace" font-size="14.00">C</text>
-<polyline fill="none" stroke="black" points="575,-108.5 575,-131.5 "/>
+<polyline fill="none" stroke="red" stroke-width="2" points="575,-108.5 575,-131.5 "/>
 <text text-anchor="middle" x="587.5" y="-116.3" font-family="monospace" font-size="14.00">D</text>
-<polyline fill="none" stroke="black" points="600,-108.5 600,-131.5 "/>
+<polyline fill="none" stroke="red" stroke-width="2" points="600,-108.5 600,-131.5 "/>
 <text text-anchor="middle" x="612.5" y="-116.3" font-family="monospace" font-size="14.00">E</text>
-<polyline fill="none" stroke="black" points="625,-108.5 625,-131.5 "/>
+<polyline fill="none" stroke="red" stroke-width="2" points="625,-108.5 625,-131.5 "/>
 <text text-anchor="middle" x="637.5" y="-116.3" font-family="monospace" font-size="14.00">F</text>
 </g>
 <!-- 100&#45;&gt;c0 -->
@@ -294,7 +294,7 @@
 <!-- 8009 -->
 <g id="node9" class="node">
 <title>8009</title>
-<ellipse fill="none" stroke="black" cx="488" cy="-18" rx="32.49" ry="18"/>
+<ellipse fill="none" stroke="red" stroke-width="2" cx="488" cy="-18" rx="32.49" ry="18"/>
 <text text-anchor="middle" x="488" y="-14.3" font-family="monospace" font-size="14.00">8009</text>
 </g>
 <!-- c0&#45;&gt;8009 -->
