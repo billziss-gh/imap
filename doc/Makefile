@@ -16,9 +16,9 @@ graph.out: ../imap.h graph.c
 
 endif
 
-svg: demo.svg node.svg nodestru.svg value.svg mapping0.svg mapping1.svg mapping2.svg lookup.svg assign0.svg assign1.svg assign2.svg
+svg: demo.svg node.svg nodestru.svg value.svg mapping0.svg mapping1.svg mapping2.svg lookup.svg assign0.svg assign1.svg assign2.svg remove0.svg remove1.svg remove2.svg
 
 %.svg: %.g
-	$(GRAPH) < $< | dot -Tsvg -Granksep=1.0 -Gnodesep=0.5 -Nfontname=monospace -o $@
+	$(GRAPH) < $< | dot -Tsvg -Granksep=1.0 -Gnodesep=0.5 -Nfontname=monospace -Elabelfontname=monospace -o $@
 %.svg: %.dot
-	dot -Tsvg -Granksep=1.0 -Gnodesep=0.5 -Nfontname=monospace $< -o $@
+	dot -Tsvg -Granksep=1.0 -Gnodesep=0.5 -Nfontname=monospace -Elabelfontname=monospace $< -o $@

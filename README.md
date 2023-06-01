@@ -119,10 +119,10 @@ The _lookup_ algorithm finds the slot that is mapped to an _x_ value, if any.
     }
 ```
 
-1. Set the current node to the root of the tree. The first node in the tree contains general data about the data structure including a pointer to the root node; it is laid in such a manner so that algorithms like _lookup_, etc. can access it as if it was a regular internal node, which avoid special case code.
+1. Set the current node to the root of the tree. The header node in the tree contains general data about the data structure including a pointer to the root node; it is laid in such a manner so that algorithms like _lookup_, etc. can access it as if it was a regular internal node, which avoids special casing code.
 2. Given a direction (`dirn`) access the slot value from the current node.
 3. If the slot value is not a pointer to another node, then:
-    1. If the slot has no value or if the node prefix does not match our _x_ value (which means that this node cannot contain _y_ values for our _x_ value) then return _null_.
+    1. If the slot has no value or if the node prefix does not match the _x_ value (which means that this node cannot contain _y_ values for the _x_ value) then return _null_.
     2. Otherwise return the found slot.
 4. Compute the new current node and retrieve its position (`posn`).
 5. Compute the direction at the node's position from the _x_ value and loop back to (2).
@@ -278,7 +278,7 @@ The _remove_ algorithm deletes the _y_ value from the slot that is mapped to an 
 1. Set the current node to the root of the tree.
 2. Given a direction (`dirn`) access the slot value from the current node.
 3. If the slot value is not a pointer to another node, then:
-    1. If the slot has no value or if the node prefix does not match our _x_ value (which means that this node cannot contain _y_ values for our _x_ value) then do nothing.
+    1. If the slot has no value or if the node prefix does not match the _x_ value (which means that this node cannot contain _y_ values for the _x_ value) then do nothing.
     2. Otherwise delete the _y_ value from the slot.
     3. Break out of the loop to continue the removal of extraneous nodes.
 4. Compute the new current node and retrieve its position (`posn`).
@@ -287,13 +287,29 @@ The _remove_ algorithm deletes the _y_ value from the slot that is mapped to an 
 7. Loop while the stack is not empty.
 8. Pop a node from the stack.
 9. Compute the node's "boolean" position (_0_ if the node's position is equal to _0_, _1_ if the node's position is not equal to _0_).
-10. Compare the node's "boolean" position to the node's population count (i.e. the number of non-empty slots). This test determines if a node with position _0_ has any non-empty slots or if a node with position other than _0_ has two or more subnodes. In either case break the loop without removing any more nodes.
+10. Compare the node's "boolean" position to the node's population count (i.e. the number of non-empty slots). This test determines if a node with position _0_ has non-empty slots or if a node with position other than _0_ has two or more subnodes. In either case break the loop without removing any more nodes.
 11. Deallocate the node.
-12. If we are at the top of the stack we update our `slot` variable to point within the first tree node so that we can update the tree root in the next executed statement.
-13. Otherwise we peek at the top of the stack to determine the node that needs to be updated to no longer point to the removed node. We then update our `slot` variable to point to the correct slot within that node.
+12. If we are at the top of the stack we update the `slot` variable to point to the pointer to the root node in the header node so that we can update the tree root in the next executed statement.
+13. Otherwise we peek at the top of the stack to determine the node that needs to be updated so that it no longer points to the removed node. We then update the `slot` variable to point to the appropriate slot within that node.
 14. Update the slot and loop back to 7.
 
-The _remove_ algorithm may remove 0, 1 or 2 nodes.
+The _remove_ algorithm may remove 0, 1 or 2 nodes. It works similarly to _lookup_ and attempts to find the slot that should be mapped to the _x_ value. If it finds such a slot then it deletes the value in it. If the position _0_ node that contained the slot has other non-empty slots, then _remove_ completes.
+
+For example after running _remove_ for _x=A0000057_:
+
+![Remove Algorithm (case 0)](doc/remove0.svg)
+
+If the position _0_ node that contained the slot has no other non-empty slots, then it is removed.
+
+For example after running _remove_ for _x=A0008069_:
+
+![Remove Algorithm (case 1)](doc/remove1.svg)
+
+If the parent node of the position _0_ node that contained the slot was removed and its parent node has only one other subnode, then it is also removed.
+
+For example after running _remove_ for _x=A0008059_:
+
+![Remove Algorithm (case 2)](doc/remove2.svg)
 
 ## Implementation
 
