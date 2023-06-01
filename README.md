@@ -313,6 +313,38 @@ For example after running _remove_ for _x=A0008059_:
 
 ## Implementation
 
+The reference implementation is a single header C/C++ file named `imap.h`. Simply include `<imap.h>` to use it.
+
+It provides the following types:
+
+- `imap_node_t`: The definition of internal and external nodes. An imap tree pointer is of type `imap_node_t *`.
+- `imap_slot_t`: The definition of a slot that contains _y_ values. A slot pointer is of type `imap_slot_t *`.
+- `imap_iter_t`: The definition of an iterator.
+- `imap_pair_t`: The definition of a pair of an _x_ value and its corresponding slot. Used by the iterator interface.
+
+It also provides the following functions:
+
+- `imap_ensure`: Ensures that the imap tree has sufficient memory for `imap_assign` operations. The parameter `n` specifies how many such operations are expected. This is the only interface that allocates memory.
+- `imap_free`: Frees the memory behind an imap tree.
+- `imap_lookup`: Finds the slot that is mapped to a value. Returns `0` (null) if no such slot exists.
+- `imap_assign`: Finds the slot that is mapped to a value, or maps a new slot if no such slot exists.
+- `imap_hasval`: Determines if a slot has a value or is empty.
+- `imap_getval`: Gets the value of a slot.
+- `imap_setval`: Sets the value of a slot.
+- `imap_delval`: Deletes the value from a slot. Note that using `imap_delval` instead of `imap_remove` can result in a tree that has superfluous internal nodes. The tree will continue to work correctly and these nodes will be reused if slots within them are reassigned, but it can result in degraded performance, especially for the iterator interface (which may have to skip over a lot of empty slots unnecessarily).
+- `imap_remove`: Removes a mapped value from a tree.
+- `imap_locate`: Locates a particular value in the tree, populates an iterator and returns a pair that contains the value and mapped slot. If the value is not found, then the returned pair contains the next value after the specified one and the corresponding mapped slot. If there is no such value the returned pair contains all zeroes.
+- `imap_iterate`: Starts or continues an iteration. The returned pair contains the next value and the corresponding mapped slot. If there is no such value the returned pair contains all zeroes.
+
+The implementation in `imap.h` can be tuned using configuration macros:
+
+- Memory allocation can be tuned using the `IMAP_ALIGNED_ALLOC`, `IMAP_ALIGNED_FREE`, `IMAP_MALLOC`, `IMAP_FREE` macros.
+- Raw performance can be improved with the `IMAP_USE_SIMD` macro. The default is to use portable versions of certain utility functions, but the `IMAP_USE_SIMD` enables use of AVX2 on x86. If one further defines `IMAP_USE_SIMD=512` then use of AVX512 on x86 is also enabled.
+
+The `imap.h` file is designed to be used as a single header file from both C and C++. It is also possible to split the interface and implementation; for this purpose look into the `IMAP_INTERFACE` and `IMAP_IMPLEMENTATION` macros.
+
+## Performance
+
 ## License
 
 MIT
