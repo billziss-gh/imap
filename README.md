@@ -345,6 +345,63 @@ The `imap.h` file is designed to be used as a single header file from both C and
 
 ## Performance
 
+This data structure has performance comparable to an unordered map (`std::unordered_map`) and is an order of magnitude faster than a regular ordered map (`std::map`). Furthermore its memory utilization is about a third to a quarter of the memory utilization of the alternatives.
+
+In order to determine performance and memory utilization, tests were performed on a Win11 system with WSL2 enabled. The tests were run 3 times and the smallest value was chosen as representative. Although some care was taken to ensure that the system remained idle, this is not easily possible in a modern OS.
+
+The environments are:
+
+- Windows:
+    - OS: Windows 11 22H2
+    - CC: Microsoft (R) C/C++ Optimizing Compiler Version 19.35.32216.1 for x64
+- WSL2/Linux:
+    - OS: Ubuntu 20.04.6 LTS
+    - CC: gcc (Ubuntu 9.4.0-1ubuntu1~20.04.1) 9.4.0
+
+In the graphs below `imap` stands for this data structure, `imbv` stands for this data structure but with a modified test so that it cannot use its _y_ value compression scheme, `stdu` stands for `std::unordered_map` and `stdm` stands for `std::map`. All times are normalized against the `imap` time on each system (so that the `imap` test "time" is always 1.0 and if a particular test took twice as much time as `imap` then its "time" would be 2.0).
+
+The `imap` data structure was compiled with `IMAP_USE_SIMD` which enables use of AVX2. Further improvements are possible by compiling with `IMAP_USE_SIMD=512` which enables use of AVX512, but this was not done for these performance comparisons as AVX512 is still not prevalent at the time of this writing.
+
+### Performance Tests
+
+- `seq_insert`: Sequential insert test of 10 million values.
+
+    ![seq_insert](doc/seq_insert.png)
+
+- `seq_assign`: Sequential assign test of 10 million values.
+
+    ![seq_assign](doc/seq_assign.png)
+
+- `seq_lookup`: Sequential lookup test of 10 million values.
+
+    ![seq_lookup](doc/seq_lookup.png)
+
+- `seq_remove`: Sequential remove test of 10 million values.
+
+    ![seq_remove](doc/seq_remove.png)
+
+- `rnd_insert`: Random insert test of 10 million values.
+
+    ![rnd_insert](doc/rnd_insert.png)
+
+- `rnd_assign`: Random assign test of 10 million values.
+
+    ![rnd_assign](doc/rnd_assign.png)
+
+- `rnd_lookup`: Random lookup test of 10 million values.
+
+    ![rnd_lookup](doc/rnd_lookup.png)
+
+- `rnd_remove`: Random remove test of 10 million values.
+
+    ![rnd_remove](doc/rnd_remove.png)
+
+### Memory Utilization Tests
+
+- `memtrack`: Memory tracking (in bytes) after insertion of 10 million values.
+
+    ![memtrack](doc/memtrack.png)
+
 ## License
 
 MIT
