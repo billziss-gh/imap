@@ -157,7 +157,7 @@ The _assign_ algorithm finds the slot that is mapped to an _x_ value, or inserts
                 }
                 newmark = imap__alloc_node__(tree);                     // (3.2)
                 *slot = (*slot & imap__slot_pmask__) | imap__slot_node__ | newmark; // (3.2)
-                break;                                                  // 3.3
+                break;                                                  // (3.3)
             }
             node = imap__node__(tree, sval & imap__slot_value__);       // (4)
             prfx = imap__node_prefix__(node);                           // (4)
@@ -221,6 +221,79 @@ For example after running _assign_ for _x=A0008069_:
 ![Assign Algorithm (case 1)](doc/assign1.svg)
 
 ### Remove Algorithm
+
+The _remove_ algorithm deletes the _y_ value from the slot that is mapped to an _x_ value. Any extraneous nodes in the path to the removed slot are also removed or merged with other nodes.
+
+```C
+    void imap_remove(imap_node_t *tree, imap_u64_t x)
+    {
+        imap_iter_t iterdata, *iter = &iterdata;
+        imap_node_t *node = tree;                                       // (1)
+        imap_slot_t *slot;
+        imap_u32_t sval, pval, posn = 16, dirn = 0;                     // (1)
+        iter->stackp = 0;
+        for (;;)
+        {
+            slot = &node->vec32[dirn];                                  // (2)
+            sval = *slot;                                               // (2)
+            if (!(sval & imap__slot_node__))                            // (3)
+            {
+                if (!(sval & imap__slot_value__) ||                     // (3.1)
+                    imap__node_prefix__(node) != (x & ~0xfull))         // (3.1)
+                    ;                                                   // (3.1)
+                else
+                {
+                    IMAP_ASSERT(0 == posn);
+                    imap_delval(tree, slot);                            // (3.2)
+                }
+                break;                                                  // (3.3)
+            }
+            node = imap__node__(tree, sval & imap__slot_value__);       // (4)
+            posn = imap__node_pos__(node);                              // (4)
+            dirn = imap__xdir__(x, posn);                               // (5)
+            iter->stack[iter->stackp++] = (sval & imap__slot_value__) | dirn;   // (6)
+        }
+        while (iter->stackp)                                            // (7)
+        {
+            sval = iter->stack[--iter->stackp];                         // (8)
+            node = imap__node__(tree, sval & imap__slot_value__);       // (8)
+            posn = !!imap__node_pos__(node);                            // (9)
+            if (posn != imap__node_popcnt__(node, &pval))               // (10)
+                break;                                                  // (10)
+            imap__free_node__(tree, sval & imap__slot_value__);         // (11)
+            if (!iter->stackp)                                          // (12)
+                slot = &tree->vec32[0];                                 // (12)
+            else
+            {
+                sval = iter->stack[iter->stackp - 1];                   // (13)
+                dirn = sval & 31;                                       // (13)
+                node = imap__node__(tree, sval & imap__slot_value__);   // (13)
+                slot = &node->vec32[dirn];                              // (13)
+            }
+            *slot = (*slot & imap__slot_pmask__) | (pval & ~imap__slot_pmask__);// (14)
+        }
+    }
+```
+
+1. Set the current node to the root of the tree.
+2. Given a direction (`dirn`) access the slot value from the current node.
+3. If the slot value is not a pointer to another node, then:
+    1. If the slot has no value or if the node prefix does not match our _x_ value (which means that this node cannot contain _y_ values for our _x_ value) then do nothing.
+    2. Otherwise delete the _y_ value from the slot.
+    3. Break out of the loop to continue the removal of extraneous nodes.
+4. Compute the new current node and retrieve its position (`posn`).
+5. Compute the direction at the node's position from the _x_ value.
+6. Store the current node pointer and current direction in a stack and loop back to (2).
+7. Loop while the stack is not empty.
+8. Pop a node from the stack.
+9. Compute the node's "boolean" position (_0_ if the node's position is equal to _0_, _1_ if the node's position is not equal to _0_).
+10. Compare the node's "boolean" position to the node's population count (i.e. the number of non-empty slots). This test determines if a node with position _0_ has any non-empty slots or if a node with position other than _0_ has two or more subnodes. In either case break the loop without removing any more nodes.
+11. Deallocate the node.
+12. If we are at the top of the stack we update our `slot` variable to point within the first tree node so that we can update the tree root in the next executed statement.
+13. Otherwise we peek at the top of the stack to determine the node that needs to be updated to no longer point to the removed node. We then update our `slot` variable to point to the correct slot within that node.
+14. Update the slot and loop back to 7.
+
+The _remove_ algorithm may remove 0, 1 or 2 nodes.
 
 ## Implementation
 
