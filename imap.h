@@ -784,7 +784,7 @@ extern "C" {
         node = imap__node__(tree, mark);
         posn = imap__node_pos__(node);
         prfx = imap__node_prefix__(node);
-        dumpfn(ctx, "\"%x\" [shape=record label=\"{%016llx / %x|"
+        dumpfn(ctx, "\"N%x\" [shape=record label=\"{%016llx / %x|"
             "{<0>0|<1>1|<2>2|<3>3|<4>4|<5>5|<6>6|<7>7|<8>8|<9>9|<A>A|<B>B|<C>C|<D>D|<E>E|<F>F}"
             "}\"]\n",
             mark, (unsigned long long)(prfx & ~imap__prefix_pos__), posn);
@@ -793,9 +793,9 @@ extern "C" {
             slot = &node->vec32[dirn];
             sval = *slot;
             if (sval & imap__slot_node__)
-                dumpfn(ctx, "\"%x\":\"%x\":s->\"%x\":n\n", mark, dirn, sval & imap__slot_value__);
+                dumpfn(ctx, "\"N%x\":\"%x\":s->\"N%x\":n\n", mark, dirn, sval & imap__slot_value__);
             else if (sval & imap__slot_value__)
-                dumpfn(ctx, "\"%x\":\"%x\":s->\"%llx\":n\n", mark, dirn, (unsigned long long)imap_getval(tree, slot));
+                dumpfn(ctx, "\"N%x\":\"%x\":s->\"%llx\":n\n", mark, dirn, (unsigned long long)imap_getval(tree, slot));
         }
         return posn;
     }

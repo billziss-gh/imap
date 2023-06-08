@@ -9,9 +9,9 @@
 <g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 159)">
 <title>%3</title>
 <polygon fill="white" stroke="transparent" points="-4,4 -4,-159 404,-159 404,4 -4,4"/>
-<!-- 40 -->
+<!-- N40 -->
 <g id="node1" class="node">
-<title>40</title>
+<title>N40</title>
 <polygon fill="none" stroke="black" points="0,-108.5 0,-154.5 400,-154.5 400,-108.5 0,-108.5"/>
 <text text-anchor="middle" x="200" y="-139.3" font-family="monospace" font-size="14.00">00000000a0000050 / 0</text>
 <polyline fill="none" stroke="black" points="0,-131.5 400,-131.5 "/>
@@ -53,9 +53,9 @@
 <ellipse fill="none" stroke="black" cx="162" cy="-18" rx="27" ry="18"/>
 <text text-anchor="middle" x="162" y="-14.3" font-family="monospace" font-size="14.00">56</text>
 </g>
-<!-- 40&#45;&gt;56 -->
+<!-- N40&#45;&gt;56 -->
 <g id="edge1" class="edge">
-<title>40:s&#45;&gt;56:n</title>
+<title>N40:s&#45;&gt;56:n</title>
 <path fill="none" stroke="black" d="M162,-108C162,-79.62 162,-70.12 162,-46.02"/>
 <polygon fill="black" stroke="black" points="165.5,-46 162,-36 158.5,-46 165.5,-46"/>
 </g>
