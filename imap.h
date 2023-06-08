@@ -552,6 +552,7 @@ extern "C" {
             }
             node = imap__node__(tree, sval & imap__slot_value__);
             posn = imap__node_pos__(node);
+            dirn = imap__xdir__(x, posn);
             prfx = imap__node_prefix__(node);
             diff = imap__xpos__(prfx ^ x);
             if (diff > posn)
@@ -566,7 +567,6 @@ extern "C" {
                 imap__node_setprefix__(newnode, imap__xpfx__(prfx, diff) | diff);
                 break;
             }
-            dirn = imap__xdir__(x, posn);
         }
         newnode = imap__node__(tree, newmark);
         *newnode = imap__node_zero__;
