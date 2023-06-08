@@ -358,11 +358,11 @@ The environments are:
     - OS: Ubuntu 20.04.6 LTS
     - CC: gcc (Ubuntu 9.4.0-1ubuntu1~20.04.1) 9.4.0
 
-In the graphs below `imap` stands for this data structure, `imbv` stands for this data structure but with a modified test so that it cannot use its _y_ value compression scheme, `stdu` stands for `std::unordered_map` and `stdm` stands for `std::map`. All times are normalized against the `imap` time on each system (so that the `imap` test "time" is always 1.0 and if a particular test took twice as much time as `imap` then its "time" would be 2.0).
-
 The `imap` data structure was compiled with `IMAP_USE_SIMD` which enables use of AVX2. Further improvements are possible by compiling with `IMAP_USE_SIMD=512` which enables use of AVX512, but this was not done in these tests as AVX512 is still not prevalent at the time of this writing.
 
 ### Performance Tests
+
+In the graphs below `imap` stands for the discussed data structure, `imbv` stands for the discussed data structure but with a modified test so that it cannot use its _y_ value compression scheme, `stdu` stands for `std::unordered_map` and `stdm` stands for `std::map`. All times are normalized against the `imap` time on each system (so that the `imap` test "time" is always 1.0 and if a particular test took twice as much time as `imap` then its "time" would be 2.0). In all graphs shorter bars are better.
 
 - `seq_insert`: Sequential insert test of 10 million values.
 
