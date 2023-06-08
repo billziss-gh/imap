@@ -551,8 +551,8 @@ extern "C" {
                 break;
             }
             node = imap__node__(tree, sval & imap__slot_value__);
+            posn = imap__node_pos__(node);
             prfx = imap__node_prefix__(node);
-            posn = prfx & imap__prefix_pos__;
             diff = imap__xpos__(prfx ^ x);
             if (diff > posn)
             {
@@ -757,8 +757,8 @@ extern "C" {
         imap_u32_t sval, posn, dirn;
         imap_u64_t prfx;
         node = imap__node__(tree, mark);
+        posn = imap__node_pos__(node);
         prfx = imap__node_prefix__(node);
-        posn = prfx & imap__prefix_pos__;
         dumpfn(ctx, "%08x: %016llx/%x",
             mark, (unsigned long long)(prfx & ~imap__prefix_pos__), posn);
         for (dirn = 0; 16 > dirn; dirn++)
@@ -782,8 +782,8 @@ extern "C" {
         imap_u32_t sval, posn, dirn;
         imap_u64_t prfx;
         node = imap__node__(tree, mark);
+        posn = imap__node_pos__(node);
         prfx = imap__node_prefix__(node);
-        posn = prfx & imap__prefix_pos__;
         dumpfn(ctx, "\"%x\" [shape=record label=\"{%016llx / %x|"
             "{<0>0|<1>1|<2>2|<3>3|<4>4|<5>5|<6>6|<7>7|<8>8|<9>9|<A>A|<B>B|<C>C|<D>D|<E>E|<F>F}"
             "}\"]\n",
