@@ -98,6 +98,13 @@ extern "C" {
     IMAP_DECLFUNC
     void imap_dump(imap_node_t *tree, imap_dumpfn_t *dumpfn, void *ctx);
 
+    static inline
+    imap_slot_t *imap_succ(imap_node_t *tree, imap_u64_t x)
+    {
+        imap_iter_t iterdata;
+        return imap_locate(tree, &iterdata, x + 1).slot;
+    }
+
 #endif
 
 #if defined(IMAP_IMPLEMENTATION)
