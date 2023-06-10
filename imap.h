@@ -516,8 +516,7 @@ extern "C" {
             sval = *slot;
             if (!(sval & imap__slot_node__))
             {
-                if (!(sval & imap__slot_value__) ||
-                    imap__node_prefix__(node) != (x & ~0xfull))
+                if (!(sval & imap__slot_value__) || imap__node_prefix__(node) != (x & ~0xfull))
                     return 0;
                 IMAP_ASSERT(0 == posn);
                 return slot;
@@ -651,8 +650,7 @@ extern "C" {
             sval = *slot;
             if (!(sval & imap__slot_node__))
             {
-                if (!(sval & imap__slot_value__) ||
-                    imap__node_prefix__(node) != (x & ~0xfull))
+                if (!(sval & imap__slot_value__) || imap__node_prefix__(node) != (x & ~0xfull))
                     ;
                 else
                 {
@@ -700,9 +698,9 @@ extern "C" {
             sval = *slot;
             if (!(sval & imap__slot_node__))
             {
-                if (!(sval & imap__slot_value__) || 0 != posn ||
-                    imap__node_prefix__(node) != (x & ~0xfull))
+                if (!(sval & imap__slot_value__) || imap__node_prefix__(node) != (x & ~0xfull))
                     return imap_iterate(tree, iter, 0);
+                IMAP_ASSERT(0 == posn);
                 return imap__pair__(imap__node_prefix__(node) | dirn, slot);
             }
             node = imap__node__(tree, sval & imap__slot_value__);
