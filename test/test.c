@@ -340,6 +340,7 @@ static void imap_assign_bigval_test(void)
         slot = imap_lookup(tree, i);
         ASSERT(0 != slot);
         imap_delval(tree, slot);
+        ASSERT(!imap_hasval(tree, slot));
     }
     for (unsigned i = 0; N > i; i++)
     {
@@ -361,6 +362,105 @@ static void imap_assign_bigval_test(void)
         ASSERT(0 != slot);
         ASSERT(imap_hasval(tree, slot));
         ASSERT((0x8000000000000000ull | i) == imap_getval(tree, slot));
+    }
+
+    imap_free(tree);
+}
+
+static void imap_assign_val128_test(void)
+{
+    const unsigned N = 100;
+    imap_node_t *tree = 0;
+    imap_slot_t *slot;
+    imap_u128_t val128;
+
+    for (unsigned i = 0; N > i; i++)
+    {
+        tree = imap_ensure128(tree, +1);
+        ASSERT(0 != tree);
+        slot = imap_assign(tree, i);
+        ASSERT(0 != slot);
+        val128.v[0] = 0x8000000000000000ull | i;
+        val128.v[1] = 0x9000000000000000ull | i;
+        imap_setval128(tree, slot, val128);
+    }
+    for (unsigned i = 0; N > i; i++)
+    {
+        slot = imap_lookup(tree, i);
+        ASSERT(0 != slot);
+        ASSERT(imap_hasval(tree, slot));
+        ASSERT((0x8000000000000000ull | i) == imap_getval128(tree, slot).v[0]);
+        ASSERT((0x9000000000000000ull | i) == imap_getval128(tree, slot).v[1]);
+    }
+
+    for (unsigned i = 0; N > i; i++)
+    {
+        tree = imap_ensure128(tree, +1);
+        ASSERT(0 != tree);
+        slot = imap_assign(tree, i);
+        ASSERT(0 != slot);
+        val128.v[0] = i;
+        val128.v[1] = i;
+        imap_setval128(tree, slot, val128);
+    }
+    for (unsigned i = 0; N > i; i++)
+    {
+        slot = imap_lookup(tree, i);
+        ASSERT(0 != slot);
+        ASSERT(imap_hasval(tree, slot));
+        ASSERT(i == imap_getval128(tree, slot).v[0]);
+        ASSERT(i == imap_getval128(tree, slot).v[1]);
+    }
+
+    for (unsigned i = 0; N > i; i++)
+    {
+        tree = imap_ensure(tree, +1);
+        ASSERT(0 != tree);
+        slot = imap_assign(tree, i);
+        ASSERT(0 != slot);
+        val128.v[0] = 0x8000000000000000ull | i;
+        val128.v[1] = 0x9000000000000000ull | i;
+        imap_setval128(tree, slot, val128);
+    }
+    for (unsigned i = 0; N > i; i++)
+    {
+        slot = imap_lookup(tree, i);
+        ASSERT(0 != slot);
+        ASSERT(imap_hasval(tree, slot));
+        ASSERT((0x8000000000000000ull | i) == imap_getval128(tree, slot).v[0]);
+        ASSERT((0x9000000000000000ull | i) == imap_getval128(tree, slot).v[1]);
+    }
+
+    for (unsigned i = 0; N > i; i++)
+    {
+        slot = imap_lookup(tree, i);
+        ASSERT(0 != slot);
+        imap_delval128(tree, slot);
+        ASSERT(!imap_hasval(tree, slot));
+    }
+    for (unsigned i = 0; N > i; i++)
+    {
+        slot = imap_lookup(tree, i);
+        ASSERT(0 == slot);
+    }
+
+    for (unsigned i = 0; N > i; i++)
+    {
+        tree = imap_ensure(tree, +1);
+        ASSERT(0 != tree);
+        slot = imap_assign(tree, i);
+        ASSERT(0 != slot);
+        val128.v[0] = 0x8000000000000000ull | i;
+        val128.v[1] = 0x9000000000000000ull | i;
+        imap_setval128(tree, slot, val128);
+    }
+    for (unsigned i = 0; N > i; i++)
+    {
+        slot = imap_lookup(tree, i);
+        ASSERT(0 != slot);
+        ASSERT(imap_hasval(tree, slot));
+        ASSERT((0x8000000000000000ull | i) == imap_getval128(tree, slot).v[0]);
+        ASSERT((0x9000000000000000ull | i) == imap_getval128(tree, slot).v[1]);
     }
 
     imap_free(tree);
@@ -928,6 +1028,7 @@ void imap_tests(void)
     TEST(imap_ensure_test);
     TEST(imap_assign_test);
     TEST(imap_assign_bigval_test);
+    TEST(imap_assign_val128_test);
     TEST(imap_assign_shuffle_test);
     TEST(imap_remove_test);
     TEST(imap_remove_shuffle_test);
