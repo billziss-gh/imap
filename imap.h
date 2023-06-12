@@ -79,11 +79,13 @@ extern "C" {
     };
 
     IMAP_DECLFUNC
-    imap_node_t *imap_ensure(imap_node_t *tree, int n);
+    imap_node_t *imap_ensure(imap_node_t *tree, imap_u32_t n);
     IMAP_DECLFUNC
-    imap_node_t *imap_ensure64(imap_node_t *tree, int n);
+    imap_node_t *imap_ensure0(imap_node_t *tree, imap_u32_t n);
     IMAP_DECLFUNC
-    imap_node_t *imap_ensure128(imap_node_t *tree, int n);
+    imap_node_t *imap_ensure64(imap_node_t *tree, imap_u32_t n);
+    IMAP_DECLFUNC
+    imap_node_t *imap_ensure128(imap_node_t *tree, imap_u32_t n);
     IMAP_DECLFUNC
     void imap_free(imap_node_t *tree);
     IMAP_DECLFUNC
@@ -95,17 +97,23 @@ extern "C" {
     IMAP_DECLFUNC
     imap_u64_t imap_getval(imap_node_t *tree, imap_slot_t *slot);
     IMAP_DECLFUNC
+    imap_u64_t imap_getval0(imap_node_t *tree, imap_slot_t *slot);
+    IMAP_DECLFUNC
     imap_u64_t imap_getval64(imap_node_t *tree, imap_slot_t *slot);
     IMAP_DECLFUNC
     imap_u128_t imap_getval128(imap_node_t *tree, imap_slot_t *slot);
     IMAP_DECLFUNC
     void imap_setval(imap_node_t *tree, imap_slot_t *slot, imap_u64_t y);
     IMAP_DECLFUNC
+    void imap_setval0(imap_node_t *tree, imap_slot_t *slot, imap_u64_t y);
+    IMAP_DECLFUNC
     void imap_setval64(imap_node_t *tree, imap_slot_t *slot, imap_u64_t y);
     IMAP_DECLFUNC
     void imap_setval128(imap_node_t *tree, imap_slot_t *slot, imap_u128_t y);
     IMAP_DECLFUNC
     void imap_delval(imap_node_t *tree, imap_slot_t *slot);
+    IMAP_DECLFUNC
+    void imap_delval0(imap_node_t *tree, imap_slot_t *slot);
     IMAP_DECLFUNC
     void imap_delval64(imap_node_t *tree, imap_slot_t *slot);
     IMAP_DECLFUNC
@@ -486,12 +494,12 @@ extern "C" {
     }
 
     static inline
-    imap_node_t *imap__ensure__(imap_node_t *tree, int n, imap_u32_t ysize)
+    imap_node_t *imap__ensure__(imap_node_t *tree, imap_u32_t n, imap_u32_t ysize)
     {
         imap_node_t *newtree;
         imap_u32_t hasnfre, hasvfre, newmark, oldsize, newsize;
         imap_u64_t newsize64;
-        if (0 >= n)
+        if (0 == n)
             return tree;
         if (0 == tree)
         {
@@ -552,19 +560,25 @@ extern "C" {
     }
 
     IMAP_DEFNFUNC
-    imap_node_t *imap_ensure(imap_node_t *tree, int n)
+    imap_node_t *imap_ensure(imap_node_t *tree, imap_u32_t n)
     {
         return imap__ensure__(tree, n, sizeof(imap_u64_t));
     }
 
     IMAP_DEFNFUNC
-    imap_node_t *imap_ensure64(imap_node_t *tree, int n)
+    imap_node_t *imap_ensure0(imap_node_t *tree, imap_u32_t n)
+    {
+        return imap__ensure__(tree, n, 0);
+    }
+
+    IMAP_DEFNFUNC
+    imap_node_t *imap_ensure64(imap_node_t *tree, imap_u32_t n)
     {
         return imap__ensure__(tree, n, sizeof(imap_u64_t));
     }
 
     IMAP_DEFNFUNC
-    imap_node_t *imap_ensure128(imap_node_t *tree, int n)
+    imap_node_t *imap_ensure128(imap_node_t *tree, imap_u32_t n)
     {
         return imap__ensure__(tree, n, sizeof(imap_u128_t));
     }
@@ -664,6 +678,14 @@ extern "C" {
     }
 
     IMAP_DEFNFUNC
+    imap_u64_t imap_getval0(imap_node_t *tree, imap_slot_t *slot)
+    {
+        IMAP_ASSERT(!(*slot & imap__slot_node__));
+        imap_u32_t sval = *slot;
+        return sval >> imap__slot_shift__;
+    }
+
+    IMAP_DEFNFUNC
     imap_u64_t imap_getval64(imap_node_t *tree, imap_slot_t *slot)
     {
         IMAP_ASSERT(!(*slot & imap__slot_node__));
@@ -708,6 +730,13 @@ extern "C" {
             *slot = (*slot & imap__slot_pmask__) | sval;
             tree->vec64[sval >> imap__slot_shift__] = y;
         }
+    }
+
+    IMAP_DEFNFUNC
+    void imap_setval0(imap_node_t *tree, imap_slot_t *slot, imap_u64_t y)
+    {
+        IMAP_ASSERT(!(*slot & imap__slot_node__));
+        *slot = (*slot & imap__slot_pmask__) | imap__slot_scalar__ | (imap_u32_t)(y << imap__slot_shift__);
     }
 
     IMAP_DEFNFUNC
@@ -758,6 +787,13 @@ extern "C" {
             tree->vec64[sval >> imap__slot_shift__] = tree->vec32[imap__tree_vfre__];
             tree->vec32[imap__tree_vfre__] = sval & imap__slot_value__;
         }
+        *slot &= imap__slot_pmask__;
+    }
+
+    IMAP_DEFNFUNC
+    void imap_delval0(imap_node_t *tree, imap_slot_t *slot)
+    {
+        IMAP_ASSERT(!(*slot & imap__slot_node__));
         *slot &= imap__slot_pmask__;
     }
 

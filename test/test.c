@@ -85,11 +85,6 @@ static void imap_ensure_test(void)
     imap_free(tree);
 
     tree = 0;
-    tree = imap_ensure(tree, -1);
-    ASSERT(0 == tree);
-    imap_free(tree);
-
-    tree = 0;
     tree = imap_ensure(tree, +1);
     ASSERT(0 != tree);
     imap_free(tree);
@@ -355,6 +350,92 @@ static void imap_assign_bigval_test(void)
         ASSERT(0 != slot);
         ASSERT(imap_hasval(tree, slot));
         ASSERT((0x8000000000000000ull | i) == imap_getval(tree, slot));
+    }
+
+    imap_free(tree);
+}
+
+static void imap_assign_val0_test(void)
+{
+    const unsigned N = 100;
+    imap_node_t *tree = 0;
+    imap_slot_t *slot;
+
+    for (unsigned i = 0; N > i; i++)
+    {
+        tree = imap_ensure0(tree, +1);
+        ASSERT(0 != tree);
+        slot = imap_assign(tree, i);
+        ASSERT(0 != slot);
+        imap_setval0(tree, slot, 0x800000ull | i);
+    }
+    for (unsigned i = 0; N > i; i++)
+    {
+        slot = imap_lookup(tree, i);
+        ASSERT(0 != slot);
+        ASSERT(imap_hasval(tree, slot));
+        ASSERT((0x800000ull | i) == imap_getval0(tree, slot));
+    }
+
+    for (unsigned i = 0; N > i; i++)
+    {
+        tree = imap_ensure0(tree, +1);
+        ASSERT(0 != tree);
+        slot = imap_assign(tree, i);
+        ASSERT(0 != slot);
+        imap_setval0(tree, slot, i);
+    }
+    for (unsigned i = 0; N > i; i++)
+    {
+        slot = imap_lookup(tree, i);
+        ASSERT(0 != slot);
+        ASSERT(imap_hasval(tree, slot));
+        ASSERT(i == imap_getval0(tree, slot));
+    }
+
+    for (unsigned i = 0; N > i; i++)
+    {
+        tree = imap_ensure0(tree, +1);
+        ASSERT(0 != tree);
+        slot = imap_assign(tree, i);
+        ASSERT(0 != slot);
+        imap_setval0(tree, slot, 0x800000ull | i);
+    }
+    for (unsigned i = 0; N > i; i++)
+    {
+        slot = imap_lookup(tree, i);
+        ASSERT(0 != slot);
+        ASSERT(imap_hasval(tree, slot));
+        ASSERT((0x800000ull | i) == imap_getval0(tree, slot));
+    }
+
+    for (unsigned i = 0; N > i; i++)
+    {
+        slot = imap_lookup(tree, i);
+        ASSERT(0 != slot);
+        imap_delval0(tree, slot);
+        ASSERT(!imap_hasval(tree, slot));
+    }
+    for (unsigned i = 0; N > i; i++)
+    {
+        slot = imap_lookup(tree, i);
+        ASSERT(0 == slot);
+    }
+
+    for (unsigned i = 0; N > i; i++)
+    {
+        tree = imap_ensure0(tree, +1);
+        ASSERT(0 != tree);
+        slot = imap_assign(tree, i);
+        ASSERT(0 != slot);
+        imap_setval0(tree, slot, 0x800000ull | i);
+    }
+    for (unsigned i = 0; N > i; i++)
+    {
+        slot = imap_lookup(tree, i);
+        ASSERT(0 != slot);
+        ASSERT(imap_hasval(tree, slot));
+        ASSERT((0x800000ull | i) == imap_getval0(tree, slot));
     }
 
     imap_free(tree);
@@ -1107,6 +1188,7 @@ void imap_tests(void)
     TEST(imap_ensure_test);
     TEST(imap_assign_test);
     TEST(imap_assign_bigval_test);
+    TEST(imap_assign_val0_test);
     TEST(imap_assign_val64_test);
     TEST(imap_assign_val128_test);
     TEST(imap_assign_shuffle_test);
