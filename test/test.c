@@ -367,6 +367,92 @@ static void imap_assign_bigval_test(void)
     imap_free(tree);
 }
 
+static void imap_assign_val64_test(void)
+{
+    const unsigned N = 100;
+    imap_node_t *tree = 0;
+    imap_slot_t *slot;
+
+    for (unsigned i = 0; N > i; i++)
+    {
+        tree = imap_ensure64(tree, +1);
+        ASSERT(0 != tree);
+        slot = imap_assign(tree, i);
+        ASSERT(0 != slot);
+        imap_setval64(tree, slot, 0x8000000000000000ull | i);
+    }
+    for (unsigned i = 0; N > i; i++)
+    {
+        slot = imap_lookup(tree, i);
+        ASSERT(0 != slot);
+        ASSERT(imap_hasval(tree, slot));
+        ASSERT((0x8000000000000000ull | i) == imap_getval64(tree, slot));
+    }
+
+    for (unsigned i = 0; N > i; i++)
+    {
+        tree = imap_ensure64(tree, +1);
+        ASSERT(0 != tree);
+        slot = imap_assign(tree, i);
+        ASSERT(0 != slot);
+        imap_setval64(tree, slot, i);
+    }
+    for (unsigned i = 0; N > i; i++)
+    {
+        slot = imap_lookup(tree, i);
+        ASSERT(0 != slot);
+        ASSERT(imap_hasval(tree, slot));
+        ASSERT(i == imap_getval64(tree, slot));
+    }
+
+    for (unsigned i = 0; N > i; i++)
+    {
+        tree = imap_ensure64(tree, +1);
+        ASSERT(0 != tree);
+        slot = imap_assign(tree, i);
+        ASSERT(0 != slot);
+        imap_setval64(tree, slot, 0x8000000000000000ull | i);
+    }
+    for (unsigned i = 0; N > i; i++)
+    {
+        slot = imap_lookup(tree, i);
+        ASSERT(0 != slot);
+        ASSERT(imap_hasval(tree, slot));
+        ASSERT((0x8000000000000000ull | i) == imap_getval64(tree, slot));
+    }
+
+    for (unsigned i = 0; N > i; i++)
+    {
+        slot = imap_lookup(tree, i);
+        ASSERT(0 != slot);
+        imap_delval64(tree, slot);
+        ASSERT(!imap_hasval(tree, slot));
+    }
+    for (unsigned i = 0; N > i; i++)
+    {
+        slot = imap_lookup(tree, i);
+        ASSERT(0 == slot);
+    }
+
+    for (unsigned i = 0; N > i; i++)
+    {
+        tree = imap_ensure(tree, +1);
+        ASSERT(0 != tree);
+        slot = imap_assign(tree, i);
+        ASSERT(0 != slot);
+        imap_setval64(tree, slot, 0x8000000000000000ull | i);
+    }
+    for (unsigned i = 0; N > i; i++)
+    {
+        slot = imap_lookup(tree, i);
+        ASSERT(0 != slot);
+        ASSERT(imap_hasval(tree, slot));
+        ASSERT((0x8000000000000000ull | i) == imap_getval64(tree, slot));
+    }
+
+    imap_free(tree);
+}
+
 static void imap_assign_val128_test(void)
 {
     const unsigned N = 100;
@@ -1028,6 +1114,7 @@ void imap_tests(void)
     TEST(imap_ensure_test);
     TEST(imap_assign_test);
     TEST(imap_assign_bigval_test);
+    TEST(imap_assign_val64_test);
     TEST(imap_assign_val128_test);
     TEST(imap_assign_shuffle_test);
     TEST(imap_remove_test);
