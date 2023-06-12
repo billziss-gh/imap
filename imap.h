@@ -491,7 +491,7 @@ extern "C" {
         imap_node_t *newtree;
         imap_u32_t hasnfre, hasvfre, newmark, oldsize, newsize;
         imap_u64_t newsize64;
-        if (0 == n)
+        if (0 >= n)
             return tree;
         if (0 == tree)
         {
@@ -507,9 +507,7 @@ extern "C" {
             newmark = tree->vec32[imap__tree_mark__];
             oldsize = tree->vec32[imap__tree_size__];
         }
-        newmark += 0 > n ?
-            (-n * 2 - hasnfre) * sizeof(imap_node_t) :
-            (+n * 2 - hasnfre) * sizeof(imap_node_t) + (n - hasvfre) * ysize;
+        newmark += (n * 2 - hasnfre) * sizeof(imap_node_t) + (n - hasvfre) * ysize;
         if (newmark <= oldsize)
             return tree;
         newsize64 = imap__ceilpow2__(newmark);

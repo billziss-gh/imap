@@ -86,19 +86,12 @@ static void imap_ensure_test(void)
 
     tree = 0;
     tree = imap_ensure(tree, -1);
-    ASSERT(0 != tree);
+    ASSERT(0 == tree);
     imap_free(tree);
 
     tree = 0;
     tree = imap_ensure(tree, +1);
     ASSERT(0 != tree);
-    imap_free(tree);
-
-    tree = 0;
-    tree = imap_ensure(tree, -1);
-    ASSERT(0 != tree);
-    tree2 = imap_ensure(tree, -1);
-    ASSERT(tree == tree2);
     imap_free(tree);
 
     tree = 0;
@@ -115,7 +108,7 @@ static void imap_assign_test(void)
     imap_slot_t *slot;
 
     tree = 0;
-    tree = imap_ensure(tree, -1);
+    tree = imap_ensure(tree, +1);
     ASSERT(0 != tree);
     slot = imap_lookup(tree, 0xA0000056);
     ASSERT(0 == slot);
@@ -135,7 +128,7 @@ static void imap_assign_test(void)
     imap_free(tree);
 
     tree = 0;
-    tree = imap_ensure(tree, -2);
+    tree = imap_ensure(tree, +2);
     ASSERT(0 != tree);
     slot = imap_assign(tree, 0xA0000056);
     ASSERT(0 != slot);
@@ -158,7 +151,7 @@ static void imap_assign_test(void)
     imap_free(tree);
 
     tree = 0;
-    tree = imap_ensure(tree, -3);
+    tree = imap_ensure(tree, +3);
     ASSERT(0 != tree);
     slot = imap_assign(tree, 0xA0000056);
     ASSERT(0 != slot);
@@ -190,7 +183,7 @@ static void imap_assign_test(void)
     imap_free(tree);
 
     tree = 0;
-    tree = imap_ensure(tree, -4);
+    tree = imap_ensure(tree, +4);
     ASSERT(0 != tree);
     slot = imap_assign(tree, 0xA0000056);
     ASSERT(0 != slot);
@@ -231,7 +224,7 @@ static void imap_assign_test(void)
     imap_free(tree);
 
     tree = 0;
-    tree = imap_ensure(tree, -5);
+    tree = imap_ensure(tree, +5);
     ASSERT(0 != tree);
     slot = imap_assign(tree, 0xA0000056);
     ASSERT(0 != slot);
@@ -612,7 +605,7 @@ static void imap_remove_test(void)
     imap_free(tree);
 
     tree = 0;
-    tree = imap_ensure(tree, -5);
+    tree = imap_ensure(tree, +5);
     ASSERT(0 != tree);
     slot = imap_assign(tree, 0xA0000056);
     ASSERT(0 != slot);
@@ -667,7 +660,7 @@ static void imap_remove_test(void)
 
     imap_u64_t mark = tree->vec32[imap__tree_mark__];
 
-    tree = imap_ensure(tree, -5);
+    tree = imap_ensure(tree, +5);
     ASSERT(0 != tree);
     slot = imap_assign(tree, 0xA0000056);
     ASSERT(0 != slot);
@@ -792,7 +785,7 @@ static void imap_iterate_test(void)
     imap_free(tree);
 
     tree = 0;
-    tree = imap_ensure(tree, -5);
+    tree = imap_ensure(tree, +5);
     ASSERT(0 != tree);
     slot = imap_assign(tree, 0xA0000056);
     ASSERT(0 != slot);
@@ -950,7 +943,7 @@ static void imap_locate_test(void)
     imap_free(tree);
 
     tree = 0;
-    tree = imap_ensure(tree, -5);
+    tree = imap_ensure(tree, +5);
     ASSERT(0 != tree);
     slot = imap_assign(tree, 0xA0000056);
     ASSERT(0 != slot);
@@ -1045,7 +1038,7 @@ static void imap_dump_test(void)
     imap_free(tree);
 
     tree = 0;
-    tree = imap_ensure(tree, -5);
+    tree = imap_ensure(tree, +5);
     ASSERT(0 != tree);
     slot = imap_assign(tree, 0xA0000056);
     ASSERT(0 != slot);
