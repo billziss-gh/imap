@@ -413,7 +413,7 @@ static void imap_assign_val0_test(void)
     {
         slot = imap_lookup(tree, i);
         ASSERT(0 != slot);
-        imap_delval0(tree, slot);
+        imap_delval(tree, slot);
         ASSERT(!imap_hasval(tree, slot));
     }
     for (unsigned i = 0; N > i; i++)
@@ -499,7 +499,7 @@ static void imap_assign_val64_test(void)
     {
         slot = imap_lookup(tree, i);
         ASSERT(0 != slot);
-        imap_delval64(tree, slot);
+        imap_delval(tree, slot);
         ASSERT(!imap_hasval(tree, slot));
     }
     for (unsigned i = 0; N > i; i++)
@@ -595,7 +595,7 @@ static void imap_assign_val128_test(void)
     {
         slot = imap_lookup(tree, i);
         ASSERT(0 != slot);
-        imap_delval128(tree, slot);
+        imap_delval(tree, slot);
         ASSERT(!imap_hasval(tree, slot));
     }
     for (unsigned i = 0; N > i; i++)

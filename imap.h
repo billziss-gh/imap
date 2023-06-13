@@ -113,12 +113,6 @@ extern "C" {
     IMAP_DECLFUNC
     void imap_delval(imap_node_t *tree, imap_slot_t *slot);
     IMAP_DECLFUNC
-    void imap_delval0(imap_node_t *tree, imap_slot_t *slot);
-    IMAP_DECLFUNC
-    void imap_delval64(imap_node_t *tree, imap_slot_t *slot);
-    IMAP_DECLFUNC
-    void imap_delval128(imap_node_t *tree, imap_slot_t *slot);
-    IMAP_DECLFUNC
     void imap_remove(imap_node_t *tree, imap_u64_t x);
     IMAP_DECLFUNC
     imap_pair_t imap_locate(imap_node_t *tree, imap_iter_t *iter, imap_u64_t x);
@@ -484,11 +478,11 @@ extern "C" {
     {
         imap_u32_t mark = imap__alloc_node__(tree);
         imap_node_t *node = imap__node__(tree, mark);
-        mark <<= 2;
+        mark <<= 3;
         tree->vec32[imap__tree_vfre__] = mark;
-        node->vec128[0].v[0] = mark + (1 << imap__slot_shift__);
-        node->vec128[1].v[0] = mark + (2 << imap__slot_shift__);
-        node->vec128[2].v[0] = mark + (3 << imap__slot_shift__);
+        node->vec128[0].v[0] = mark + (2 << imap__slot_shift__);
+        node->vec128[1].v[0] = mark + (4 << imap__slot_shift__);
+        node->vec128[2].v[0] = mark + (6 << imap__slot_shift__);
         node->vec128[3].v[0] = 0;
         return mark;
     }
@@ -545,8 +539,8 @@ extern "C" {
             else
             if (sizeof(imap_u128_t) == ysize)
             {
-                newtree->vec32[imap__tree_vfre__] = 2 << imap__slot_shift__;
-                newtree->vec128[2].v[0] = 3 << imap__slot_shift__;
+                newtree->vec32[imap__tree_vfre__] = 4 << imap__slot_shift__;
+                newtree->vec128[2].v[0] = 6 << imap__slot_shift__;
                 newtree->vec128[3].v[0] = 0;
             }
         }
@@ -698,7 +692,7 @@ extern "C" {
     {
         IMAP_ASSERT(!(*slot & imap__slot_node__));
         imap_u32_t sval = *slot;
-        return tree->vec128[sval >> imap__slot_shift__];
+        return tree->vec128[sval >> (imap__slot_shift__ + 1)];
     }
 
     IMAP_DEFNFUNC
@@ -769,12 +763,12 @@ extern "C" {
             if (!sval)
                 sval = imap__alloc_val128__(tree);
             IMAP_ASSERT(sval >> imap__slot_shift__);
-            tree->vec32[imap__tree_vfre__] = (imap_u32_t)tree->vec128[sval >> imap__slot_shift__].v[0];
+            tree->vec32[imap__tree_vfre__] = (imap_u32_t)tree->vec128[sval >> (imap__slot_shift__ + 1)].v[0];
         }
         IMAP_ASSERT(!(sval & imap__slot_node__));
         IMAP_ASSERT(imap__sval_boxed__(sval));
         *slot = (*slot & imap__slot_pmask__) | sval;
-        tree->vec128[sval >> imap__slot_shift__] = y;
+        tree->vec128[sval >> (imap__slot_shift__ + 1)] = y;
     }
 
     IMAP_DEFNFUNC
@@ -785,39 +779,6 @@ extern "C" {
         if (imap__sval_boxed__(sval))
         {
             tree->vec64[sval >> imap__slot_shift__] = tree->vec32[imap__tree_vfre__];
-            tree->vec32[imap__tree_vfre__] = sval & imap__slot_value__;
-        }
-        *slot &= imap__slot_pmask__;
-    }
-
-    IMAP_DEFNFUNC
-    void imap_delval0(imap_node_t *tree, imap_slot_t *slot)
-    {
-        IMAP_ASSERT(!(*slot & imap__slot_node__));
-        *slot &= imap__slot_pmask__;
-    }
-
-    IMAP_DEFNFUNC
-    void imap_delval64(imap_node_t *tree, imap_slot_t *slot)
-    {
-        IMAP_ASSERT(!(*slot & imap__slot_node__));
-        imap_u32_t sval = *slot;
-        if (sval >> imap__slot_shift__)
-        {
-            tree->vec64[sval >> imap__slot_shift__] = tree->vec32[imap__tree_vfre__];
-            tree->vec32[imap__tree_vfre__] = sval & imap__slot_value__;
-        }
-        *slot &= imap__slot_pmask__;
-    }
-
-    IMAP_DEFNFUNC
-    void imap_delval128(imap_node_t *tree, imap_slot_t *slot)
-    {
-        IMAP_ASSERT(!(*slot & imap__slot_node__));
-        imap_u32_t sval = *slot;
-        if (sval >> imap__slot_shift__)
-        {
-            tree->vec128[sval >> imap__slot_shift__].v[0] = tree->vec32[imap__tree_vfre__];
             tree->vec32[imap__tree_vfre__] = sval & imap__slot_value__;
         }
         *slot &= imap__slot_pmask__;
