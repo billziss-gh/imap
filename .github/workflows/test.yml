@@ -1,0 +1,50 @@
+name: test
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2022, ubuntu-22.04]
+        include:
+          - os: windows-2022
+            shell: msys2 {0}
+          - os: ubuntu-22.04
+            shell: bash
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: ${{ matrix.shell }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Enable MSVC (Windows)
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+      - name: Install prerequisites (Windows)
+        if: runner.os == 'Windows'
+        uses: msys2/setup-msys2@v2
+        with:
+          path-type: inherit
+          msystem: mingw64
+          install: >-
+            base-devel
+      - name: Install prerequisites (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt install valgrind
+      - name: Functional testing
+        run: |
+          make -C test
+          make -C test testcxx
+      - name: Valgrind testing (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          make -C test valgrind
+      - name: Performance testing
+        run: |
+          make -C perf
