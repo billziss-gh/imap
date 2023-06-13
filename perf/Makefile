@@ -3,7 +3,7 @@ ifeq ($(OS),Windows_NT)
 bench: bench.exe
 	.\bench.exe $(BENCH_CMDLINE)
 bench.exe: ../imap.h bench.cpp wrap.cpp
-	cl /I.. /DIMAP_USE_SIMD /D_CRT_SECURE_NO_WARNINGS /W3 /GS- /sdl- /O2 /Oi /MT /GL- bench.cpp wrap.cpp ../tlib/testsuite.c /Fe$@
+	cl -I.. -DIMAP_USE_SIMD -D_CRT_SECURE_NO_WARNINGS -W3 -GS- -sdl- -O2 -Oi -MT -GL- bench.cpp wrap.cpp ../tlib/testsuite.c -Fe$@
 
 else
 
