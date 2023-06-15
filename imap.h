@@ -113,6 +113,10 @@ extern "C" {
     IMAP_DECLFUNC
     void imap_delval(imap_node_t *tree, imap_slot_t *slot);
     IMAP_DECLFUNC
+    imap_u64_t *imap_addrof64(imap_node_t *tree, imap_slot_t *slot);
+    IMAP_DECLFUNC
+    imap_u128_t *imap_addrof128(imap_node_t *tree, imap_slot_t *slot);
+    IMAP_DECLFUNC
     void imap_remove(imap_node_t *tree, imap_u64_t x);
     IMAP_DECLFUNC
     imap_pair_t imap_locate(imap_node_t *tree, imap_iter_t *iter, imap_u64_t x);
@@ -122,10 +126,10 @@ extern "C" {
     void imap_dump(imap_node_t *tree, imap_dumpfn_t *dumpfn, void *ctx);
 
     static inline
-    imap_slot_t *imap_succ(imap_node_t *tree, imap_u64_t x)
+    imap_pair_t imap_succ(imap_node_t *tree, imap_u64_t x)
     {
         imap_iter_t iterdata;
-        return imap_locate(tree, &iterdata, x + 1).slot;
+        return imap_locate(tree, &iterdata, x + 1);
     }
 
 #endif
@@ -513,7 +517,7 @@ extern "C" {
         if (newmark <= oldsize)
             return tree;
         newsize64 = imap__ceilpow2__(newmark);
-        if (0x80000000 < newsize64)
+        if (0x20000000 < newsize64)
             return 0;
         newsize = (imap_u32_t)newsize64;
         newtree = (imap_node_t *)IMAP_ALIGNED_ALLOC(sizeof(imap_node_t), newsize);
@@ -785,6 +789,22 @@ extern "C" {
     }
 
     IMAP_DEFNFUNC
+    imap_u64_t *imap_addrof64(imap_node_t *tree, imap_slot_t *slot)
+    {
+        IMAP_ASSERT(!(*slot & imap__slot_node__));
+        imap_u32_t sval = *slot;
+        return &tree->vec64[sval >> imap__slot_shift__];
+    }
+
+    IMAP_DEFNFUNC
+    imap_u128_t *imap_addrof128(imap_node_t *tree, imap_slot_t *slot)
+    {
+        IMAP_ASSERT(!(*slot & imap__slot_node__));
+        imap_u32_t sval = *slot;
+        return &tree->vec128[sval >> (imap__slot_shift__ + 1)];
+    }
+
+    IMAP_DEFNFUNC
     void imap_remove(imap_node_t *tree, imap_u64_t x)
     {
         imap_iter_t iterdata, *iter = &iterdata;
@@ -839,6 +859,7 @@ extern "C" {
         imap_node_t *node = tree;
         imap_slot_t *slot;
         imap_u32_t sval, posn = 16, dirn = 0;
+        imap_u64_t prfx;
         iter->stackp = 0;
         for (;;)
         {
@@ -846,10 +867,15 @@ extern "C" {
             sval = *slot;
             if (!(sval & imap__slot_node__))
             {
-                if (!(sval & imap__slot_value__) || imap__node_prefix__(node) != (x & ~0xfull))
+                prfx = imap__node_prefix__(node);
+                if (!(sval & imap__slot_value__) || prfx != (x & ~0xfull))
+                {
+                    if (0 < iter->stackp && prfx > x)
+                        iter->stack[iter->stackp - 1] &= imap__slot_value__;
                     return imap_iterate(tree, iter, 0);
+                }
                 IMAP_ASSERT(0 == posn);
-                return imap__pair__(imap__node_prefix__(node) | dirn, slot);
+                return imap__pair__(prfx | dirn, slot);
             }
             node = imap__node__(tree, sval & imap__slot_value__);
             posn = imap__node_pos__(node);

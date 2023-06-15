@@ -32,6 +32,25 @@ static imap_u64_t test_rand(void)
     return seed;
 }
 
+static imap_u32_t *test_bsearch(imap_u32_t x, imap_u32_t *array, int count)
+{
+    int lo = 0, hi = count - 1, mi;
+    int di;
+
+    while (lo <= hi)
+    {
+        mi = (unsigned)(lo + hi) >> 1;
+        di = array[mi] - x;
+        if (0 > di)
+            lo = mi + 1;
+        else if (0 < di)
+            hi = mi - 1;
+        else
+            return &array[mi];
+    }
+    return &array[lo];
+}
+
 static int test_concat_sprintf(void *ctx, const char *format, ...)
 {
     char **pstr = (char **)ctx;
@@ -935,9 +954,9 @@ static void imap_iterate_test(void)
     imap_free(tree);
 }
 
-static int u64cmp(const void *x, const void *y)
+static int u32cmp(const void *x, const void *y)
 {
-    return (int)(*(imap_u64_t *)x - *(imap_u64_t *)y);
+    return (int)(*(imap_u32_t *)x - *(imap_u32_t *)y);
 }
 
 static void imap_iterate_shuffle_dotest(imap_u64_t seed)
@@ -987,7 +1006,7 @@ static void imap_iterate_shuffle_dotest(imap_u64_t seed)
     for (unsigned i = 0; N / 2 > i; i++)
         imap_remove(tree, array[i]);
 
-    qsort(array + N / 2, N / 2, sizeof array[0], u64cmp);
+    qsort(array + N / 2, N / 2, sizeof array[0], u32cmp);
 
     pair = imap_iterate(tree, &iter, 1);
     for (unsigned i = N / 2; N > i; i++)
@@ -1024,6 +1043,18 @@ static void imap_locate_test(void)
     imap_free(tree);
 
     tree = 0;
+    tree = imap_ensure(tree, +1);
+    ASSERT(0 != tree);
+    slot = imap_assign(tree, 1200);
+    ASSERT(0 != slot);
+    imap_setval(tree, slot, 1100);
+    pair = imap_locate(tree, &iter, 1100);
+    ASSERT(1200 == pair.x && 0 != pair.slot && 1100 == imap_getval(tree, slot));
+    pair = imap_iterate(tree, &iter, 0);
+    ASSERT(0 == pair.x && 0 == pair.slot);
+    imap_free(tree);
+
+    tree = 0;
     tree = imap_ensure(tree, +5);
     ASSERT(0 != tree);
     slot = imap_assign(tree, 0xA0000056);
@@ -1041,6 +1072,25 @@ static void imap_locate_test(void)
     slot = imap_assign(tree, 0xA0008069);
     ASSERT(0 != slot);
     imap_setval(tree, slot, 0x8069);
+    //
+    pair = imap_locate(tree, &iter, 1100);
+    ASSERT(0xA0000056 == pair.x && 0 != pair.slot);
+    ASSERT(0x56 == imap_getval(tree, pair.slot));
+    pair = imap_iterate(tree, &iter, 0);
+    ASSERT(0xA0000057 == pair.x && 0 != pair.slot);
+    ASSERT(0x57 == imap_getval(tree, pair.slot));
+    pair = imap_iterate(tree, &iter, 0);
+    ASSERT(0xA0008009 == pair.x && 0 != pair.slot);
+    ASSERT(0x8009 == imap_getval(tree, pair.slot));
+    pair = imap_iterate(tree, &iter, 0);
+    ASSERT(0xA0008059 == pair.x && 0 != pair.slot);
+    ASSERT(0x8059 == imap_getval(tree, pair.slot));
+    pair = imap_iterate(tree, &iter, 0);
+    ASSERT(0xA0008069 == pair.x && 0 != pair.slot);
+    ASSERT(0x8069 == imap_getval(tree, pair.slot));
+    pair = imap_iterate(tree, &iter, 0);
+    ASSERT(0 == pair.x && 0 == pair.slot);
+    //
     //
     pair = imap_locate(tree, &iter, 0xA0000057);
     ASSERT(0xA0000057 == pair.x && 0 != pair.slot);
@@ -1101,6 +1151,109 @@ static void imap_locate_test(void)
     slot = imap_lookup(tree, 0xA0008069);
     ASSERT(0 == slot);
     imap_free(tree);
+}
+
+static void imap_locate_random_dotest(imap_u64_t seed)
+{
+    const unsigned N = 10000000;
+    const unsigned M = 1000000;
+    imap_u32_t *array;
+    imap_node_t *tree = 0;
+    imap_slot_t *slot;
+    imap_iter_t iter;
+    imap_pair_t pair;
+    imap_u32_t r, *p;
+
+    tlib_printf("seed=%llu ", (unsigned long long)seed);
+    test_srand(seed);
+
+    array = (imap_u32_t *)malloc(N * sizeof(imap_u32_t));
+    ASSERT(0 != array);
+
+    for (unsigned i = 0; N > i; i++)
+        array[i] = 0x1000000 | (test_rand() & 0x3ffffff);
+
+    for (unsigned i = 0; N > i; i++)
+    {
+        tree = imap_ensure(tree, +1);
+        ASSERT(0 != tree);
+        slot = imap_assign(tree, array[i]);
+        ASSERT(0 != slot);
+        imap_setval(tree, slot, array[i]);
+    }
+
+    qsort(array, N, sizeof array[0], u32cmp);
+
+    for (unsigned i = 0; M > i; i++)
+    {
+        r = test_rand() & 0x3ffffff;
+        pair = imap_locate(tree, &iter, r);
+        p = test_bsearch(r, array, N);
+        if (array + N > p)
+        {
+            ASSERT(*p == pair.x);
+            ASSERT(0 != pair.slot);
+            ASSERT(*p == imap_getval(tree, pair.slot));
+            pair = imap_iterate(tree, &iter, 0);
+            p++;
+            if (array + N > p)
+            {
+                ASSERT(*p == pair.x);
+                ASSERT(0 != pair.slot);
+                ASSERT(*p == imap_getval(tree, pair.slot));
+            }
+            else
+            {
+                ASSERT(0 == pair.x);
+                ASSERT(0 == pair.slot);
+            }
+        }
+        else
+        {
+            ASSERT(0 == pair.x);
+            ASSERT(0 == pair.slot);
+        }
+    }
+
+    for (unsigned i = 0; M > i; i++)
+    {
+        r = test_rand() % N;
+        pair = imap_locate(tree, &iter, array[r]);
+        p = test_bsearch(array[r], array, N);
+        if (array + N > p)
+        {
+            ASSERT(*p == pair.x);
+            ASSERT(0 != pair.slot);
+            ASSERT(*p == imap_getval(tree, pair.slot));
+            pair = imap_iterate(tree, &iter, 0);
+            p++;
+            if (array + N > p)
+            {
+                ASSERT(*p == pair.x);
+                ASSERT(0 != pair.slot);
+                ASSERT(*p == imap_getval(tree, pair.slot));
+            }
+            else
+            {
+                ASSERT(0 == pair.x);
+                ASSERT(0 == pair.slot);
+            }
+        }
+        else
+        {
+            ASSERT(0 == pair.x);
+            ASSERT(0 == pair.slot);
+        }
+    }
+
+    imap_free(tree);
+
+    free(array);
+}
+
+static void imap_locate_random_test(void)
+{
+    imap_locate_random_dotest(time(0));
 }
 
 static void imap_dump_test(void)
@@ -1197,6 +1350,7 @@ void imap_tests(void)
     TEST(imap_iterate_test);
     TEST(imap_iterate_shuffle_test);
     TEST(imap_locate_test);
+    TEST(imap_locate_random_test);
     TEST(imap_dump_test);
 }
 
