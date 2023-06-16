@@ -19,6 +19,7 @@
 //#define IMAP_USE_SIMD
 #define IMAP_ASSERT(expr)               ASSERT(expr)
 #include "imap.h"
+#include "ivmap.h"
 
 static imap_u64_t seed = 0;
 static void test_srand(imap_u64_t s)
@@ -1055,6 +1056,21 @@ static void imap_locate_test(void)
     imap_free(tree);
 
     tree = 0;
+    tree = imap_ensure(tree, +1);
+    ASSERT(0 != tree);
+    slot = imap_assign(tree, 1200);
+    ASSERT(0 != slot);
+    imap_setval(tree, slot, 1100);
+    tree = imap_ensure(tree, +1);
+    ASSERT(0 != tree);
+    slot = imap_assign(tree, 1100);
+    ASSERT(0 != slot);
+    imap_setval(tree, slot, 1000);
+    pair = imap_locate(tree, &iter, 1300);
+    ASSERT(0 == pair.x && 0 == pair.slot);
+    imap_free(tree);
+
+    tree = 0;
     tree = imap_ensure(tree, +5);
     ASSERT(0 != tree);
     slot = imap_assign(tree, 0xA0000056);
@@ -1354,9 +1370,400 @@ void imap_tests(void)
     TEST(imap_dump_test);
 }
 
+static void ivmap_insert_test(void)
+{
+    ivmap_node_t *tree;
+    ivmap_u64_t *y;
+
+    tree = 0;
+    tree = ivmap_ensure(tree, +1);
+    ASSERT(0 != tree);
+    y = ivmap_insert(tree, 1100, 1200);
+    ASSERT(0 != y);
+    *y = 101100;
+    y = ivmap_lookup(tree, 1099);
+    ASSERT(0 == y);
+    y = ivmap_lookup(tree, 1100);
+    ASSERT(0 != y && 101100 == *y);
+    y = ivmap_lookup(tree, 1150);
+    ASSERT(0 != y && 101100 == *y);
+    y = ivmap_lookup(tree, 1199);
+    ASSERT(0 != y && 101100 == *y);
+    y = ivmap_lookup(tree, 1200);
+    ASSERT(0 == y);
+    y = ivmap_insert(tree, 1100, 1200);
+    ASSERT(0 == y);
+    y = ivmap_insert(tree, 1199, 1200);
+    ASSERT(0 == y);
+    y = ivmap_insert(tree, 1100, 1101);
+    ASSERT(0 == y);
+    y = ivmap_insert(tree, 1000, 1101);
+    ASSERT(0 == y);
+    y = ivmap_insert(tree, 1000, 1200);
+    ASSERT(0 == y);
+    y = ivmap_insert(tree, 1000, 1300);
+    ASSERT(0 == y);
+    y = ivmap_insert(tree, 1199, 1300);
+    ASSERT(0 == y);
+    tree = ivmap_ensure(tree, +1);
+    ASSERT(0 != tree);
+    y = ivmap_insert(tree, 1000, 1100);
+    ASSERT(0 != y);
+    *y = 101000;
+    y = ivmap_lookup(tree, 999);
+    ASSERT(0 == y);
+    y = ivmap_lookup(tree, 1000);
+    ASSERT(0 != y && 101000 == *y);
+    y = ivmap_lookup(tree, 1050);
+    ASSERT(0 != y && 101000 == *y);
+    y = ivmap_lookup(tree, 1099);
+    ASSERT(0 != y && 101000 == *y);
+    y = ivmap_lookup(tree, 1100);
+    ASSERT(0 != y && 101100 == *y);
+    y = ivmap_lookup(tree, 1200);
+    ASSERT(0 == y);
+    tree = ivmap_ensure(tree, +1);
+    ASSERT(0 != tree);
+    y = ivmap_insert(tree, 1200, 1300);
+    ASSERT(0 != y);
+    *y = 101200;
+    y = ivmap_lookup(tree, 999);
+    ASSERT(0 == y);
+    y = ivmap_lookup(tree, 1000);
+    ASSERT(0 != y && 101000 == *y);
+    y = ivmap_lookup(tree, 1100);
+    ASSERT(0 != y && 101100 == *y);
+    y = ivmap_lookup(tree, 1200);
+    ASSERT(0 != y && 101200 == *y);
+    y = ivmap_lookup(tree, 1299);
+    ASSERT(0 != y && 101200 == *y);
+    y = ivmap_lookup(tree, 1300);
+    ASSERT(0 == y);
+    y = ivmap_insert(tree, 1050, 1150);
+    ASSERT(0 == y);
+    y = ivmap_insert(tree, 1150, 1250);
+    ASSERT(0 == y);
+    ivmap_free(tree);
+
+    tree = 0;
+    tree = ivmap_ensure(tree, +1);
+    ASSERT(0 != tree);
+    y = ivmap_insert(tree, 1100, 1200);
+    ASSERT(0 != y);
+    *y = 101100;
+    tree = ivmap_ensure(tree, +1);
+    ASSERT(0 != tree);
+    y = ivmap_insert(tree, 1300, 1400);
+    ASSERT(0 != y);
+    *y = 101300;
+    y = ivmap_insert(tree, 1000, 1500);
+    ASSERT(0 == y);
+    y = ivmap_insert(tree, 1000, 1350);
+    ASSERT(0 == y);
+    y = ivmap_insert(tree, 1350, 1500);
+    ASSERT(0 == y);
+    y = ivmap_lookup(tree, 1099);
+    ASSERT(0 == y);
+    y = ivmap_lookup(tree, 1100);
+    ASSERT(0 != y && 101100 == *y);
+    y = ivmap_lookup(tree, 1199);
+    ASSERT(0 != y && 101100 == *y);
+    y = ivmap_lookup(tree, 1200);
+    ASSERT(0 == y);
+    y = ivmap_lookup(tree, 1299);
+    ASSERT(0 == y);
+    y = ivmap_lookup(tree, 1300);
+    ASSERT(0 != y && 101300 == *y);
+    y = ivmap_lookup(tree, 1399);
+    ASSERT(0 != y && 101300 == *y);
+    y = ivmap_lookup(tree, 1400);
+    ASSERT(0 == y);
+    ivmap_free(tree);
+}
+
+static void ivmap_remove_test(void)
+{
+    ivmap_node_t *tree;
+    ivmap_u64_t *y;
+
+    tree = 0;
+    tree = ivmap_ensure(tree, +1);
+    ASSERT(0 != tree);
+    y = ivmap_insert(tree, 1100, 1200);
+    ASSERT(0 != y);
+    *y = 101100;
+    y = ivmap_lookup(tree, 1100);
+    ASSERT(0 != y && 101100 == *y);
+    ivmap_remove(tree, 1100);
+    y = ivmap_lookup(tree, 1100);
+    ASSERT(0 == y);
+    ivmap_free(tree);
+
+    tree = 0;
+    tree = ivmap_ensure(tree, +1);
+    ASSERT(0 != tree);
+    y = ivmap_insert(tree, 1100, 1200);
+    ASSERT(0 != y);
+    *y = 101100;
+    y = ivmap_insert(tree, 1200, 1300);
+    ASSERT(0 != y);
+    *y = 101200;
+    y = ivmap_lookup(tree, 1100);
+    ASSERT(0 != y && 101100 == *y);
+    y = ivmap_lookup(tree, 1200);
+    ASSERT(0 != y && 101200 == *y);
+    ivmap_remove(tree, 1100);
+    y = ivmap_lookup(tree, 1100);
+    ASSERT(0 == y);
+    y = ivmap_lookup(tree, 1200);
+    ASSERT(0 != y && 101200 == *y);
+    ivmap_remove(tree, 1200);
+    y = ivmap_lookup(tree, 1200);
+    ASSERT(0 == y);
+    ivmap_free(tree);
+
+    tree = 0;
+    tree = ivmap_ensure(tree, +1);
+    ASSERT(0 != tree);
+    y = ivmap_insert(tree, 1100, 1200);
+    ASSERT(0 != y);
+    *y = 101100;
+    y = ivmap_insert(tree, 1300, 1400);
+    ASSERT(0 != y);
+    *y = 101300;
+    y = ivmap_lookup(tree, 1100);
+    ASSERT(0 != y && 101100 == *y);
+    y = ivmap_lookup(tree, 1300);
+    ASSERT(0 != y && 101300 == *y);
+    ivmap_remove(tree, 1100);
+    y = ivmap_lookup(tree, 1100);
+    ASSERT(0 == y);
+    y = ivmap_lookup(tree, 1300);
+    ASSERT(0 != y && 101300 == *y);
+    ivmap_remove(tree, 1300);
+    y = ivmap_lookup(tree, 1300);
+    ASSERT(0 == y);
+    ivmap_free(tree);
+}
+
+static void ivmap_locate_test(void)
+{
+    ivmap_node_t *tree;
+    ivmap_u64_t *y;
+    ivmap_iter_t iter;
+    ivmap_pair_t pair;
+
+    tree = 0;
+    tree = ivmap_ensure(tree, +1);
+    ASSERT(0 != tree);
+    pair = ivmap_locate(tree, &iter, 0);
+    ASSERT(0 == pair.x0 && 0 == pair.x1 && 0 == pair.y);
+    ivmap_free(tree);
+
+    tree = 0;
+    tree = ivmap_ensure(tree, +1);
+    ASSERT(0 != tree);
+    y = ivmap_insert(tree, 1100, 1200);
+    ASSERT(0 != y);
+    *y = 101100;
+    pair = ivmap_locate(tree, &iter, 0);
+    ASSERT(1100 == pair.x0 && 1200 == pair.x1 && 0 != pair.y && 101100 == *pair.y);
+    pair = ivmap_locate(tree, &iter, 1099);
+    ASSERT(1100 == pair.x0 && 1200 == pair.x1 && 0 != pair.y && 101100 == *pair.y);
+    pair = ivmap_locate(tree, &iter, 1100);
+    ASSERT(1100 == pair.x0 && 1200 == pair.x1 && 0 != pair.y && 101100 == *pair.y);
+    pair = ivmap_locate(tree, &iter, 1199);
+    ASSERT(1100 == pair.x0 && 1200 == pair.x1 && 0 != pair.y && 101100 == *pair.y);
+    pair = ivmap_locate(tree, &iter, 1200);
+    ASSERT(0 == pair.x0 && 0 == pair.x1 && 0 == pair.y);
+    ivmap_free(tree);
+
+    tree = 0;
+    tree = ivmap_ensure(tree, +1);
+    ASSERT(0 != tree);
+    y = ivmap_insert(tree, 1100, 1200);
+    ASSERT(0 != y);
+    *y = 101100;
+    tree = ivmap_ensure(tree, +1);
+    ASSERT(0 != tree);
+    y = ivmap_insert(tree, 1200, 1300);
+    ASSERT(0 != y);
+    *y = 101200;
+    pair = ivmap_locate(tree, &iter, 1100);
+    ASSERT(1100 == pair.x0 && 1200 == pair.x1 && 0 != pair.y && 101100 == *pair.y);
+    pair = ivmap_locate(tree, &iter, 1200);
+    ASSERT(1200 == pair.x0 && 1300 == pair.x1 && 0 != pair.y && 101200 == *pair.y);
+    pair = ivmap_locate(tree, &iter, 1300);
+    ASSERT(0 == pair.x0 && 0 == pair.x1 && 0 == pair.y);
+    ivmap_free(tree);
+
+    tree = 0;
+    tree = ivmap_ensure(tree, +1);
+    ASSERT(0 != tree);
+    y = ivmap_insert(tree, 1100, 1200);
+    ASSERT(0 != y);
+    *y = 101100;
+    tree = ivmap_ensure(tree, +1);
+    ASSERT(0 != tree);
+    y = ivmap_insert(tree, 1300, 1400);
+    ASSERT(0 != y);
+    *y = 101300;
+    pair = ivmap_locate(tree, &iter, 1100);
+    ASSERT(1100 == pair.x0 && 1200 == pair.x1 && 0 != pair.y && 101100 == *pair.y);
+    pair = ivmap_locate(tree, &iter, 1200);
+    ASSERT(1300 == pair.x0 && 1400 == pair.x1 && 0 != pair.y && 101300 == *pair.y);
+    pair = ivmap_locate(tree, &iter, 1300);
+    ASSERT(1300 == pair.x0 && 1400 == pair.x1 && 0 != pair.y && 101300 == *pair.y);
+    pair = ivmap_locate(tree, &iter, 1400);
+    ASSERT(0 == pair.x0 && 0 == pair.x1 && 0 == pair.y);
+    ivmap_free(tree);
+}
+
+static void ivmap_iterate_test(void)
+{
+    ivmap_node_t *tree;
+    ivmap_u64_t *y;
+    ivmap_iter_t iter;
+    ivmap_pair_t pair;
+
+    tree = 0;
+    tree = ivmap_ensure(tree, +1);
+    ASSERT(0 != tree);
+    pair = ivmap_iterate(tree, &iter, 1);
+    ASSERT(0 == pair.x0 && 0 == pair.x1 && 0 == pair.y);
+    ivmap_free(tree);
+
+    tree = 0;
+    tree = ivmap_ensure(tree, +1);
+    ASSERT(0 != tree);
+    y = ivmap_insert(tree, 1100, 1200);
+    ASSERT(0 != y);
+    *y = 101100;
+    pair = ivmap_iterate(tree, &iter, 1);
+    ASSERT(1100 == pair.x0 && 1200 == pair.x1 && 0 != pair.y && 101100 == *pair.y);
+    pair = ivmap_iterate(tree, &iter, 0);
+    ASSERT(0 == pair.x0 && 0 == pair.x1 && 0 == pair.y);
+    ivmap_free(tree);
+
+    tree = 0;
+    tree = ivmap_ensure(tree, +1);
+    ASSERT(0 != tree);
+    y = ivmap_insert(tree, 1100, 1200);
+    ASSERT(0 != y);
+    *y = 101100;
+    tree = ivmap_ensure(tree, +1);
+    ASSERT(0 != tree);
+    y = ivmap_insert(tree, 1200, 1300);
+    ASSERT(0 != y);
+    *y = 101200;
+    pair = ivmap_iterate(tree, &iter, 1);
+    ASSERT(1100 == pair.x0 && 1200 == pair.x1 && 0 != pair.y && 101100 == *pair.y);
+    pair = ivmap_iterate(tree, &iter, 0);
+    ASSERT(1200 == pair.x0 && 1300 == pair.x1 && 0 != pair.y && 101200 == *pair.y);
+    pair = ivmap_iterate(tree, &iter, 0);
+    ASSERT(0 == pair.x0 && 0 == pair.x1 && 0 == pair.y);
+    ivmap_free(tree);
+
+    tree = 0;
+    tree = ivmap_ensure(tree, +1);
+    ASSERT(0 != tree);
+    y = ivmap_insert(tree, 1100, 1200);
+    ASSERT(0 != y);
+    *y = 101100;
+    pair = ivmap_locate(tree, &iter, 0);
+    ASSERT(1100 == pair.x0 && 1200 == pair.x1 && 0 != pair.y && 101100 == *pair.y);
+    pair = ivmap_iterate(tree, &iter, 0);
+    ASSERT(0 == pair.x0 && 0 == pair.x1 && 0 == pair.y);
+    pair = ivmap_locate(tree, &iter, 1099);
+    ASSERT(1100 == pair.x0 && 1200 == pair.x1 && 0 != pair.y && 101100 == *pair.y);
+    pair = ivmap_iterate(tree, &iter, 0);
+    ASSERT(0 == pair.x0 && 0 == pair.x1 && 0 == pair.y);
+    pair = ivmap_locate(tree, &iter, 1100);
+    ASSERT(1100 == pair.x0 && 1200 == pair.x1 && 0 != pair.y && 101100 == *pair.y);
+    pair = ivmap_iterate(tree, &iter, 0);
+    ASSERT(0 == pair.x0 && 0 == pair.x1 && 0 == pair.y);
+    pair = ivmap_locate(tree, &iter, 1199);
+    ASSERT(1100 == pair.x0 && 1200 == pair.x1 && 0 != pair.y && 101100 == *pair.y);
+    pair = ivmap_iterate(tree, &iter, 0);
+    ASSERT(0 == pair.x0 && 0 == pair.x1 && 0 == pair.y);
+    pair = ivmap_locate(tree, &iter, 1200);
+    ASSERT(0 == pair.x0 && 0 == pair.x1 && 0 == pair.y);
+    pair = ivmap_iterate(tree, &iter, 0);
+    ASSERT(0 == pair.x0 && 0 == pair.x1 && 0 == pair.y);
+    ivmap_free(tree);
+
+    tree = 0;
+    tree = ivmap_ensure(tree, +1);
+    ASSERT(0 != tree);
+    y = ivmap_insert(tree, 1100, 1200);
+    ASSERT(0 != y);
+    *y = 101100;
+    tree = ivmap_ensure(tree, +1);
+    ASSERT(0 != tree);
+    y = ivmap_insert(tree, 1200, 1300);
+    ASSERT(0 != y);
+    *y = 101200;
+    pair = ivmap_locate(tree, &iter, 1100);
+    ASSERT(1100 == pair.x0 && 1200 == pair.x1 && 0 != pair.y && 101100 == *pair.y);
+    pair = ivmap_iterate(tree, &iter, 0);
+    ASSERT(1200 == pair.x0 && 1300 == pair.x1 && 0 != pair.y && 101200 == *pair.y);
+    pair = ivmap_iterate(tree, &iter, 0);
+    ASSERT(0 == pair.x0 && 0 == pair.x1 && 0 == pair.y);
+    pair = ivmap_locate(tree, &iter, 1200);
+    ASSERT(1200 == pair.x0 && 1300 == pair.x1 && 0 != pair.y && 101200 == *pair.y);
+    pair = ivmap_iterate(tree, &iter, 0);
+    ASSERT(0 == pair.x0 && 0 == pair.x1 && 0 == pair.y);
+    pair = ivmap_locate(tree, &iter, 1300);
+    ASSERT(0 == pair.x0 && 0 == pair.x1 && 0 == pair.y);
+    pair = ivmap_iterate(tree, &iter, 0);
+    ASSERT(0 == pair.x0 && 0 == pair.x1 && 0 == pair.y);
+    ivmap_free(tree);
+
+    tree = 0;
+    tree = ivmap_ensure(tree, +1);
+    ASSERT(0 != tree);
+    y = ivmap_insert(tree, 1100, 1200);
+    ASSERT(0 != y);
+    *y = 101100;
+    tree = ivmap_ensure(tree, +1);
+    ASSERT(0 != tree);
+    y = ivmap_insert(tree, 1300, 1400);
+    ASSERT(0 != y);
+    *y = 101300;
+    pair = ivmap_locate(tree, &iter, 1100);
+    ASSERT(1100 == pair.x0 && 1200 == pair.x1 && 0 != pair.y && 101100 == *pair.y);
+    pair = ivmap_iterate(tree, &iter, 0);
+    ASSERT(1300 == pair.x0 && 1400 == pair.x1 && 0 != pair.y && 101300 == *pair.y);
+    pair = ivmap_iterate(tree, &iter, 0);
+    ASSERT(0 == pair.x0 && 0 == pair.x1 && 0 == pair.y);
+    pair = ivmap_locate(tree, &iter, 1200);
+    ASSERT(1300 == pair.x0 && 1400 == pair.x1 && 0 != pair.y && 101300 == *pair.y);
+    pair = ivmap_iterate(tree, &iter, 0);
+    ASSERT(0 == pair.x0 && 0 == pair.x1 && 0 == pair.y);
+    pair = ivmap_locate(tree, &iter, 1300);
+    ASSERT(1300 == pair.x0 && 1400 == pair.x1 && 0 != pair.y && 101300 == *pair.y);
+    pair = ivmap_iterate(tree, &iter, 0);
+    ASSERT(0 == pair.x0 && 0 == pair.x1 && 0 == pair.y);
+    pair = ivmap_locate(tree, &iter, 1400);
+    ASSERT(0 == pair.x0 && 0 == pair.x1 && 0 == pair.y);
+    pair = ivmap_iterate(tree, &iter, 0);
+    ASSERT(0 == pair.x0 && 0 == pair.x1 && 0 == pair.y);
+
+    ivmap_free(tree);
+}
+
+void ivmap_tests(void)
+{
+    TEST(ivmap_insert_test);
+    TEST(ivmap_remove_test);
+    TEST(ivmap_locate_test);
+    TEST(ivmap_iterate_test);
+}
+
 int main(int argc, char **argv)
 {
     TESTSUITE(imap_tests);
+    TESTSUITE(ivmap_tests);
 
     tlib_run_tests(argc, argv);
     return 0;
