@@ -19,6 +19,7 @@
 //#define IMAP_USE_SIMD
 #define IMAP_ASSERT(expr)               ASSERT(expr)
 #include "imap.h"
+#include "iset.h"
 #include "ivmap.h"
 
 static imap_u64_t seed = 0;
@@ -1370,6 +1371,184 @@ void imap_tests(void)
     TEST(imap_dump_test);
 }
 
+static void iset_assign_test(void)
+{
+    iset_node_t *tree;
+
+    tree = 0;
+    tree = iset_ensure(tree, +1);
+    ASSERT(0 != tree);
+    ASSERT(!iset_lookup(tree, 0));
+    iset_assign(tree, 0);
+    ASSERT(iset_lookup(tree, 0));
+    ASSERT(!iset_lookup(tree, 1));
+    tree = iset_ensure(tree, +1);
+    iset_assign(tree, 1);
+    ASSERT(iset_lookup(tree, 1));
+    ASSERT(!iset_lookup(tree, 1000));
+    tree = iset_ensure(tree, +1);
+    iset_assign(tree, 1000);
+    ASSERT(iset_lookup(tree, 1000));
+    iset_free(tree);
+}
+
+static void iset_remove_test(void)
+{
+    iset_node_t *tree;
+
+    tree = 0;
+    tree = iset_ensure(tree, +3);
+    ASSERT(0 != tree);
+    ASSERT(!iset_lookup(tree, 0));
+    ASSERT(!iset_lookup(tree, 1));
+    ASSERT(!iset_lookup(tree, 2));
+    ASSERT(!iset_lookup(tree, 1000));
+    ASSERT(!iset_lookup(tree, 2000));
+    iset_assign(tree, 0);
+    iset_assign(tree, 1);
+    iset_assign(tree, 1000);
+    ASSERT(iset_lookup(tree, 0));
+    ASSERT(iset_lookup(tree, 1));
+    ASSERT(!iset_lookup(tree, 2));
+    ASSERT(iset_lookup(tree, 1000));
+    ASSERT(!iset_lookup(tree, 2000));
+    iset_remove(tree, 2);
+    ASSERT(iset_lookup(tree, 0));
+    ASSERT(iset_lookup(tree, 1));
+    ASSERT(!iset_lookup(tree, 2));
+    ASSERT(iset_lookup(tree, 1000));
+    ASSERT(!iset_lookup(tree, 2000));
+    iset_remove(tree, 2000);
+    ASSERT(iset_lookup(tree, 0));
+    ASSERT(iset_lookup(tree, 1));
+    ASSERT(!iset_lookup(tree, 2));
+    ASSERT(iset_lookup(tree, 1000));
+    ASSERT(!iset_lookup(tree, 2000));
+    iset_remove(tree, 0);
+    ASSERT(!iset_lookup(tree, 0));
+    ASSERT(iset_lookup(tree, 1));
+    ASSERT(!iset_lookup(tree, 2));
+    ASSERT(iset_lookup(tree, 1000));
+    ASSERT(!iset_lookup(tree, 2000));
+    iset_remove(tree, 1);
+    ASSERT(!iset_lookup(tree, 0));
+    ASSERT(!iset_lookup(tree, 1));
+    ASSERT(!iset_lookup(tree, 2));
+    ASSERT(iset_lookup(tree, 1000));
+    ASSERT(!iset_lookup(tree, 2000));
+    iset_remove(tree, 1000);
+    ASSERT(!iset_lookup(tree, 0));
+    ASSERT(!iset_lookup(tree, 1));
+    ASSERT(!iset_lookup(tree, 2));
+    ASSERT(!iset_lookup(tree, 1000));
+    ASSERT(!iset_lookup(tree, 2000));
+    iset_free(tree);
+}
+
+static void iset_locate_test(void)
+{
+    iset_node_t *tree;
+    iset_iter_t iter;
+    iset_pair_t pair;
+
+    tree = 0;
+    tree = iset_ensure(tree, +5);
+    ASSERT(0 != tree);
+    pair = iset_locate(tree, &iter, 0);
+    ASSERT(0 == pair.x && !pair.elemof);
+    pair = iset_iterate(tree, &iter, 0);
+    ASSERT(0 == pair.x && !pair.elemof);
+    iset_free(tree);
+
+    tree = 0;
+    tree = iset_ensure(tree, +5);
+    ASSERT(0 != tree);
+    iset_assign(tree, 0);
+    iset_assign(tree, 1);
+    iset_assign(tree, 10);
+    iset_assign(tree, 1000);
+    iset_assign(tree, 1002);
+    pair = iset_locate(tree, &iter, 0);
+    ASSERT(0 == pair.x && pair.elemof);
+    pair = iset_iterate(tree, &iter, 0);
+    ASSERT(1 == pair.x && pair.elemof);
+    pair = iset_locate(tree, &iter, 1);
+    ASSERT(1 == pair.x && pair.elemof);
+    pair = iset_iterate(tree, &iter, 0);
+    ASSERT(10 == pair.x && pair.elemof);
+    pair = iset_locate(tree, &iter, 2);
+    ASSERT(10 == pair.x && pair.elemof);
+    pair = iset_iterate(tree, &iter, 0);
+    ASSERT(1000 == pair.x && pair.elemof);
+    pair = iset_locate(tree, &iter, 999);
+    ASSERT(1000 == pair.x && pair.elemof);
+    pair = iset_iterate(tree, &iter, 0);
+    ASSERT(1002 == pair.x && pair.elemof);
+    pair = iset_locate(tree, &iter, 1000);
+    ASSERT(1000 == pair.x && pair.elemof);
+    pair = iset_iterate(tree, &iter, 0);
+    ASSERT(1002 == pair.x && pair.elemof);
+    pair = iset_locate(tree, &iter, 1001);
+    ASSERT(1002 == pair.x && pair.elemof);
+    pair = iset_iterate(tree, &iter, 0);
+    ASSERT(0 == pair.x && !pair.elemof);
+    pair = iset_locate(tree, &iter, 1002);
+    ASSERT(1002 == pair.x && pair.elemof);
+    pair = iset_iterate(tree, &iter, 0);
+    ASSERT(0 == pair.x && !pair.elemof);
+    pair = iset_locate(tree, &iter, 1003);
+    ASSERT(0 == pair.x && !pair.elemof);
+    iset_free(tree);
+}
+
+static void iset_iterate_test(void)
+{
+    iset_node_t *tree;
+    iset_iter_t iter;
+    iset_pair_t pair;
+
+    tree = 0;
+    tree = iset_ensure(tree, +5);
+    ASSERT(0 != tree);
+    pair = iset_iterate(tree, &iter, 1);
+    ASSERT(0 == pair.x && !pair.elemof);
+    pair = iset_iterate(tree, &iter, 0);
+    ASSERT(0 == pair.x && !pair.elemof);
+    iset_free(tree);
+
+    tree = 0;
+    tree = iset_ensure(tree, +5);
+    ASSERT(0 != tree);
+    iset_assign(tree, 0);
+    iset_assign(tree, 1);
+    iset_assign(tree, 10);
+    iset_assign(tree, 1000);
+    iset_assign(tree, 1002);
+    pair = iset_iterate(tree, &iter, 1);
+    ASSERT(0 == pair.x && pair.elemof);
+    pair = iset_iterate(tree, &iter, 0);
+    ASSERT(1 == pair.x && pair.elemof);
+    pair = iset_iterate(tree, &iter, 0);
+    ASSERT(10 == pair.x && pair.elemof);
+    pair = iset_iterate(tree, &iter, 0);
+    ASSERT(1000 == pair.x && pair.elemof);
+    pair = iset_iterate(tree, &iter, 0);
+    ASSERT(1002 == pair.x && pair.elemof);
+    pair = iset_iterate(tree, &iter, 0);
+    ASSERT(0 == pair.x && !pair.elemof);
+    pair = iset_iterate(tree, &iter, 0);
+    ASSERT(0 == pair.x && !pair.elemof);
+    iset_free(tree);
+}
+
+void iset_tests(void)
+{
+    TEST(iset_assign_test);
+    TEST(iset_remove_test);
+    TEST(iset_locate_test);
+    TEST(iset_iterate_test);
+}
+
 static void ivmap_insert_test(void)
 {
     ivmap_node_t *tree;
@@ -1763,6 +1942,7 @@ void ivmap_tests(void)
 int main(int argc, char **argv)
 {
     TESTSUITE(imap_tests);
+    TESTSUITE(iset_tests);
     TESTSUITE(ivmap_tests);
 
     tlib_run_tests(argc, argv);
