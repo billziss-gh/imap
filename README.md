@@ -95,35 +95,36 @@ For this reason this data structure uses a single contiguous array of nodes for 
 The _lookup_ algorithm finds the slot that is mapped to an _x_ value, if any.
 
 ```C
-    imap_slot_t *imap_lookup(imap_node_t *tree, imap_u64_t x)
+imap_slot_t *imap_lookup(imap_node_t *tree, imap_u64_t x)
+{
+    imap_node_t *node = tree;                                       // (1)
+    imap_slot_t *slot;
+    imap_u32_t sval, posn = 16, dirn = 0;                           // (1)
+    for (;;)
     {
-        imap_node_t *node = tree;                                       // (1)
-        imap_slot_t *slot;
-        imap_u32_t sval, posn = 16, dirn = 0;                           // (1)
-        for (;;)
+        slot = &node->vec32[dirn];                                  // (2)
+        sval = *slot;                                               // (2)
+        if (!(sval & imap__slot_node__))                            // (3)
         {
-            slot = &node->vec32[dirn];                                  // (2)
-            sval = *slot;                                               // (2)
-            if (!(sval & imap__slot_node__))                            // (3)
-            {
-                if (!(sval & imap__slot_value__) ||                     // (3.1)
-                    imap__node_prefix__(node) != (x & ~0xfull))         // (3.1)
-                    return 0;                                           // (3.1)
-                IMAP_ASSERT(0 == posn);
-                return slot;                                            // (3.2)
+            if ((sval & imap__slot_value__) && imap__node_prefix__(node) == (x & ~0xfull))
+            {                                                       // (3.1)
+                IMAP_ASSERT(0 == posn);                             // (3.1)
+                return slot;                                        // (3.1)
             }
-            node = imap__node__(tree, sval & imap__slot_value__);       // (4)
-            posn = imap__node_pos__(node);                              // (4)
-            dirn = imap__xdir__(x, posn);                               // (5)
+            return 0;                                               // (3.2)
         }
+        node = imap__node__(tree, sval & imap__slot_value__);       // (4)
+        posn = imap__node_pos__(node);                              // (4)
+        dirn = imap__xdir__(x, posn);                               // (5)
     }
+}
 ```
 
 1. Set the current node to the root of the tree. The header node in the tree contains general data about the data structure including a pointer to the root node; it is laid in such a manner so that algorithms like _lookup_, etc. can access it as if it was a regular internal node, which avoids special casing code.
 2. Given a direction (`dirn`) access the slot value from the current node.
 3. If the slot value is not a pointer to another node, then:
-    1. If the slot has no value or if the node prefix does not match the _x_ value (which means that this node cannot contain _y_ values for the _x_ value) then return _null_.
-    2. Otherwise return the found slot.
+    1. If the slot has a value and if the node prefix matches the _x_ value then return the found slot.
+    2. Otherwise return _null_.
 4. Compute the new current node and retrieve its position (`posn`).
 5. Compute the direction at the node's position from the _x_ value and loop back to (2).
 
@@ -138,50 +139,50 @@ For example to lookup the value _x=A0008009_:
 The _assign_ algorithm finds the slot that is mapped to an _x_ value, or inserts a new slot if necessary.
 
 ```C
-    imap_slot_t *imap_assign(imap_node_t *tree, imap_u64_t x)
+imap_slot_t *imap_assign(imap_node_t *tree, imap_u64_t x)
+{
+    imap_node_t *newnode, *node = tree;                             // (1)
+    imap_slot_t *slot;
+    imap_u32_t newmark, sval, diff, posn = 16, dirn = 0;            // (1)
+    imap_u64_t prfx;
+    for (;;)
     {
-        imap_node_t *newnode, *node = tree;                             // (1)
-        imap_slot_t *slot;
-        imap_u32_t newmark, sval, diff, posn = 16, dirn = 0;            // (1)
-        imap_u64_t prfx;
-        for (;;)
+        slot = &node->vec32[dirn];                                  // (2)
+        sval = *slot;                                               // (2)
+        if (!(sval & imap__slot_node__))                            // (3)
         {
-            slot = &node->vec32[dirn];                                  // (2)
-            sval = *slot;                                               // (2)
-            if (!(sval & imap__slot_node__))                            // (3)
-            {
-                if (0 == posn)                                          // (3.1)
-                {
-                    IMAP_ASSERT(imap__node_prefix__(node) == (x & ~0xfull));
-                    return slot;                                        // (3.1)
-                }
-                newmark = imap__alloc_node__(tree);                     // (3.2)
-                *slot = (*slot & imap__slot_pmask__) | imap__slot_node__ | newmark; // (3.2)
-                break;                                                  // (3.3)
+            if (0 == posn)
+            {                                                       // (3.1)
+                IMAP_ASSERT(imap__node_prefix__(node) == (x & ~0xfull));
+                return slot;                                        // (3.1)
             }
-            node = imap__node__(tree, sval & imap__slot_value__);       // (4)
-            prfx = imap__node_prefix__(node);                           // (4)
-            posn = prfx & imap__prefix_pos__;                           // (4)
-            diff = imap__xpos__(prfx ^ x);                              // (5)
-            if (diff > posn)                                            // (6)
-            {
-                newmark = imap__alloc_node__(tree);                     // (6.1)
-                *slot = (*slot & imap__slot_pmask__) | imap__slot_node__ | newmark; // (6.1)
-                newnode = imap__node__(tree, newmark);
-                newmark = imap__alloc_node__(tree);                     // (6.2)
-                *newnode = imap__node_zero__;
-                newnode->vec32[imap__xdir__(prfx, diff)] = sval;        // (6.3)
-                newnode->vec32[imap__xdir__(x, diff)] = imap__slot_node__ | newmark;// (6.3)
-                imap__node_setprefix__(newnode, imap__xpfx__(prfx, diff) | diff);   // (6.4)
-                break;                                                  // (6.5)
-            }
-            dirn = imap__xdir__(x, posn);                               // (7)
+            newmark = imap__alloc_node__(tree);                     // (3.2)
+            *slot = (*slot & imap__slot_pmask__) | imap__slot_node__ | newmark; // (3.2)
+            break;                                                  // (3.3)
         }
-        newnode = imap__node__(tree, newmark);                          // (8)
-        *newnode = imap__node_zero__;                                   // (8)
-        imap__node_setprefix__(newnode, x & ~0xfull);                   // (8)
-        return &newnode->vec32[x & 0xfull];                             // (9)
-    }
+        node = imap__node__(tree, sval & imap__slot_value__);       // (4)
+        posn = imap__node_pos__(node);                              // (4)
+        dirn = imap__xdir__(x, posn);                               // (5)
+        prfx = imap__node_prefix__(node);                           // (6)
+        diff = imap__xpos__(prfx ^ x);                              // (6)
+        if (diff > posn)                                            // (7)
+        {
+            newmark = imap__alloc_node__(tree);                     // (7.1)
+            *slot = (*slot & imap__slot_pmask__) | imap__slot_node__ | newmark; // (7.1)
+            newnode = imap__node__(tree, newmark);
+            newmark = imap__alloc_node__(tree);                     // (7.2)
+            *newnode = imap__node_zero__;
+            newnode->vec32[imap__xdir__(prfx, diff)] = sval;        // (7.3)
+            newnode->vec32[imap__xdir__(x, diff)] = imap__slot_node__ | newmark;// (7.3)
+            imap__node_setprefix__(newnode, imap__xpfx__(prfx, diff) | diff);   // (7.4)
+            break;                                                  // (7.5)
+        }
+    }                                                               // (8)
+    newnode = imap__node__(tree, newmark);                          // (9)
+    *newnode = imap__node_zero__;                                   // (9)
+    imap__node_setprefix__(newnode, x & ~0xfull);                   // (9)
+    return &newnode->vec32[x & 0xfull];                             // (10)
+}
 ```
 
 1. Set the current node to the root of the tree.
@@ -190,17 +191,18 @@ The _assign_ algorithm finds the slot that is mapped to an _x_ value, or inserts
     1. If the node position (`posn`) is zero, then return the found slot.
     2. Otherwise we must insert a new node with position _0_ to point to the _y_ value. Allocate space for the node and update the current slot to point to it.
     3. Break out of the loop to complete the initialization of the new node.
-4. Compute the new current node and retrieve its prefix (`prfx`) and position (`posn`).
-5. Compute the XOR difference of the node's prefix and the _x_ value (`diff`).
-6. If the XOR difference is greater than the current node's position, then:
+4. Compute the new current node and retrieve its position (`posn`).
+5. Compute the direction at the node's position from the _x_ value.
+6. Retrieve the node's prefix (`prfx`) and compute the XOR difference of the node's prefix and the _x_ value (`diff`).
+7. If the XOR difference is greater than the current node's position, then:
     1. We must insert a new node **above** the current node with position equal to the XOR difference. Allocate space for the node and update the current slot to point to it. Let us call this node N<sub>D</sub>.
     2. We must also insert a new node with position _0_ to point to the _y_ value. Allocate space for that node as well. Let us call this node N<sub>0</sub>.
     3. Initialize node N<sub>D</sub> so that one slot points to the current node and one slot points to node N<sub>0</sub>.
     4. Set the node N<sub>D</sub> prefix and position.
     5. Break out of the loop to complete the initialization of node N<sub>0</sub>.
-7. Compute the direction at the node's position from the _x_ value and loop back to (2).
-8. Initialize new node with position _0_ and set its prefix from the _x_ value.
-9. Return the correct slot from the new node.
+8. Loop back to (2).
+9. Initialize new node with position _0_ and set its prefix from the _x_ value.
+10. Return the correct slot from the new node.
 
 The _assign_ algorithm may insert 0, 1 or 2 new nodes. It works similarly to _lookup_ and attempts to find the slot that should be mapped to the _x_ value. If the node that contains this slot already exists, then _assign_ simply returns the appropriate slot within that node so that it can be filled ("assigned") with the _y_ value.
 
@@ -225,62 +227,58 @@ For example after running _assign_ for _x=A0008069_:
 The _remove_ algorithm deletes the _y_ value from the slot that is mapped to an _x_ value. Any extraneous nodes in the path to the removed slot are also removed or merged with other nodes.
 
 ```C
-    void imap_remove(imap_node_t *tree, imap_u64_t x)
+void imap_remove(imap_node_t *tree, imap_u64_t x)
+{
+    imap_iter_t iterdata, *iter = &iterdata;
+    imap_node_t *node = tree;                                       // (1)
+    imap_slot_t *slot;
+    imap_u32_t sval, pval, posn = 16, dirn = 0;                     // (1)
+    iter->stackp = 0;
+    for (;;)
     {
-        imap_iter_t iterdata, *iter = &iterdata;
-        imap_node_t *node = tree;                                       // (1)
-        imap_slot_t *slot;
-        imap_u32_t sval, pval, posn = 16, dirn = 0;                     // (1)
-        iter->stackp = 0;
-        for (;;)
+        slot = &node->vec32[dirn];                                  // (2)
+        sval = *slot;                                               // (2)
+        if (!(sval & imap__slot_node__))                            // (3)
         {
-            slot = &node->vec32[dirn];                                  // (2)
-            sval = *slot;                                               // (2)
-            if (!(sval & imap__slot_node__))                            // (3)
-            {
-                if (!(sval & imap__slot_value__) ||                     // (3.1)
-                    imap__node_prefix__(node) != (x & ~0xfull))         // (3.1)
-                    ;                                                   // (3.1)
-                else
-                {
-                    IMAP_ASSERT(0 == posn);
-                    imap_delval(tree, slot);                            // (3.2)
-                }
-                break;                                                  // (3.3)
+            if ((sval & imap__slot_value__) && imap__node_prefix__(node) == (x & ~0xfull))
+            {                                                       // (3.1)
+                IMAP_ASSERT(0 == posn);                             // (3.1)
+                imap_delval(tree, slot);                            // (3.1)
             }
-            node = imap__node__(tree, sval & imap__slot_value__);       // (4)
-            posn = imap__node_pos__(node);                              // (4)
-            dirn = imap__xdir__(x, posn);                               // (5)
-            iter->stack[iter->stackp++] = (sval & imap__slot_value__) | dirn;   // (6)
+            break;                                                  // (3.2)
         }
-        while (iter->stackp)                                            // (7)
-        {
-            sval = iter->stack[--iter->stackp];                         // (8)
-            node = imap__node__(tree, sval & imap__slot_value__);       // (8)
-            posn = !!imap__node_pos__(node);                            // (9)
-            if (posn != imap__node_popcnt__(node, &pval))               // (10)
-                break;                                                  // (10)
-            imap__free_node__(tree, sval & imap__slot_value__);         // (11)
-            if (!iter->stackp)                                          // (12)
-                slot = &tree->vec32[0];                                 // (12)
-            else
-            {
-                sval = iter->stack[iter->stackp - 1];                   // (13)
-                dirn = sval & 31;                                       // (13)
-                node = imap__node__(tree, sval & imap__slot_value__);   // (13)
-                slot = &node->vec32[dirn];                              // (13)
-            }
-            *slot = (*slot & imap__slot_pmask__) | (pval & ~imap__slot_pmask__);// (14)
-        }
+        node = imap__node__(tree, sval & imap__slot_value__);       // (4)
+        posn = imap__node_pos__(node);                              // (4)
+        dirn = imap__xdir__(x, posn);                               // (5)
+        iter->stack[iter->stackp++] = (sval & imap__slot_value__) | dirn;   // (6)
     }
+    while (iter->stackp)                                            // (7)
+    {
+        sval = iter->stack[--iter->stackp];                         // (8)
+        node = imap__node__(tree, sval & imap__slot_value__);       // (8)
+        posn = !!imap__node_pos__(node);                            // (9)
+        if (posn != imap__node_popcnt__(node, &pval))               // (10)
+            break;                                                  // (10)
+        imap__free_node__(tree, sval & imap__slot_value__);         // (11)
+        if (!iter->stackp)                                          // (12)
+            slot = &tree->vec32[0];                                 // (12)
+        else
+        {
+            sval = iter->stack[iter->stackp - 1];                   // (13)
+            dirn = sval & 31;                                       // (13)
+            node = imap__node__(tree, sval & imap__slot_value__);   // (13)
+            slot = &node->vec32[dirn];                              // (13)
+        }
+        *slot = (*slot & imap__slot_pmask__) | (pval & ~imap__slot_pmask__);// (14)
+    }
+}
 ```
 
 1. Set the current node to the root of the tree.
 2. Given a direction (`dirn`) access the slot value from the current node.
 3. If the slot value is not a pointer to another node, then:
-    1. If the slot has no value or if the node prefix does not match the _x_ value (which means that this node cannot contain _y_ values for the _x_ value) then do nothing.
-    2. Otherwise delete the _y_ value from the slot.
-    3. Break out of the loop to continue the removal of extraneous nodes.
+    1. If the slot has a value and if the node prefix matches the _x_ value then delete the _y_ value from the slot.
+    2. Break out of the loop to continue the removal of extraneous nodes.
 4. Compute the new current node and retrieve its position (`posn`).
 5. Compute the direction at the node's position from the _x_ value.
 6. Store the current node pointer and current direction in a stack and loop back to (2).
