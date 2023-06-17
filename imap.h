@@ -377,7 +377,8 @@ extern "C" {
     #define imap__slot_scalar__         0x00000020
     #define imap__slot_value__          0xffffffe0
     #define imap__slot_shift__          6
-    #define imap__sval_boxed__(sval)    (!((sval) & imap__slot_scalar__) && ((sval) >> imap__slot_shift__))
+    #define imap__slot_sbits__          (32 - imap__slot_shift__)
+    #define imap__slot_boxed__(sval)    (!((sval) & imap__slot_scalar__) && ((sval) >> imap__slot_shift__))
 
     #ifdef __cplusplus
     #define imap__node_zero__           (imap_node_t{ 0 })
@@ -599,10 +600,12 @@ extern "C" {
             sval = *slot;
             if (!(sval & imap__slot_node__))
             {
-                if (!(sval & imap__slot_value__) || imap__node_prefix__(node) != (x & ~0xfull))
-                    return 0;
-                IMAP_ASSERT(0 == posn);
-                return slot;
+                if ((sval & imap__slot_value__) && imap__node_prefix__(node) == (x & ~0xfull))
+                {
+                    IMAP_ASSERT(0 == posn);
+                    return slot;
+                }
+                return 0;
             }
             node = imap__node__(tree, sval & imap__slot_value__);
             posn = imap__node_pos__(node);
@@ -669,7 +672,7 @@ extern "C" {
     {
         IMAP_ASSERT(!(*slot & imap__slot_node__));
         imap_u32_t sval = *slot;
-        if (!imap__sval_boxed__(sval))
+        if (!imap__slot_boxed__(sval))
             return sval >> imap__slot_shift__;
         else
             return tree->vec64[sval >> imap__slot_shift__];
@@ -704,9 +707,9 @@ extern "C" {
     {
         IMAP_ASSERT(!(*slot & imap__slot_node__));
         imap_u32_t sval = *slot;
-        if (y < (1 << 26))
+        if (y < (1 << (imap__slot_sbits__)))
         {
-            if (imap__sval_boxed__(sval))
+            if (imap__slot_boxed__(sval))
             {
                 tree->vec64[sval >> imap__slot_shift__] = tree->vec32[imap__tree_vfre__];
                 tree->vec32[imap__tree_vfre__] = sval & imap__slot_value__;
@@ -715,7 +718,7 @@ extern "C" {
         }
         else
         {
-            if (!imap__sval_boxed__(sval))
+            if (!imap__slot_boxed__(sval))
             {
                 sval = tree->vec32[imap__tree_vfre__];
                 if (!sval)
@@ -724,7 +727,7 @@ extern "C" {
                 tree->vec32[imap__tree_vfre__] = (imap_u32_t)tree->vec64[sval >> imap__slot_shift__];
             }
             IMAP_ASSERT(!(sval & imap__slot_node__));
-            IMAP_ASSERT(imap__sval_boxed__(sval));
+            IMAP_ASSERT(imap__slot_boxed__(sval));
             *slot = (*slot & imap__slot_pmask__) | sval;
             tree->vec64[sval >> imap__slot_shift__] = y;
         }
@@ -751,7 +754,7 @@ extern "C" {
             tree->vec32[imap__tree_vfre__] = (imap_u32_t)tree->vec64[sval >> imap__slot_shift__];
         }
         IMAP_ASSERT(!(sval & imap__slot_node__));
-        IMAP_ASSERT(imap__sval_boxed__(sval));
+        IMAP_ASSERT(imap__slot_boxed__(sval));
         *slot = (*slot & imap__slot_pmask__) | sval;
         tree->vec64[sval >> imap__slot_shift__] = y;
     }
@@ -770,7 +773,7 @@ extern "C" {
             tree->vec32[imap__tree_vfre__] = (imap_u32_t)tree->vec128[sval >> (imap__slot_shift__ + 1)].v[0];
         }
         IMAP_ASSERT(!(sval & imap__slot_node__));
-        IMAP_ASSERT(imap__sval_boxed__(sval));
+        IMAP_ASSERT(imap__slot_boxed__(sval));
         *slot = (*slot & imap__slot_pmask__) | sval;
         tree->vec128[sval >> (imap__slot_shift__ + 1)] = y;
     }
@@ -780,7 +783,7 @@ extern "C" {
     {
         IMAP_ASSERT(!(*slot & imap__slot_node__));
         imap_u32_t sval = *slot;
-        if (imap__sval_boxed__(sval))
+        if (imap__slot_boxed__(sval))
         {
             tree->vec64[sval >> imap__slot_shift__] = tree->vec32[imap__tree_vfre__];
             tree->vec32[imap__tree_vfre__] = sval & imap__slot_value__;
@@ -818,9 +821,7 @@ extern "C" {
             sval = *slot;
             if (!(sval & imap__slot_node__))
             {
-                if (!(sval & imap__slot_value__) || imap__node_prefix__(node) != (x & ~0xfull))
-                    ;
-                else
+                if ((sval & imap__slot_value__) && imap__node_prefix__(node) == (x & ~0xfull))
                 {
                     IMAP_ASSERT(0 == posn);
                     imap_delval(tree, slot);
@@ -868,20 +869,20 @@ extern "C" {
             if (!(sval & imap__slot_node__))
             {
                 prfx = imap__node_prefix__(node) & ~0xfull;
-                if (!(sval & imap__slot_value__) || prfx != (x & ~0xfull))
+                if ((sval & imap__slot_value__) && prfx == (x & ~0xfull))
                 {
-                    if (0 < iter->stackp)
-                    {
-                        xpfx = imap__xpfx__(x, posn);
-                        if (xpfx < prfx)
-                            iter->stack[iter->stackp - 1] &= imap__slot_value__;
-                        else if (prfx < xpfx)
-                            iter->stackp--;
-                    }
-                    return imap_iterate(tree, iter, 0);
+                    IMAP_ASSERT(0 == posn);
+                    return imap__pair__(prfx | dirn, slot);
                 }
-                IMAP_ASSERT(0 == posn);
-                return imap__pair__(prfx | dirn, slot);
+                if (0 < iter->stackp)
+                {
+                    xpfx = imap__xpfx__(x, posn);
+                    if (xpfx < prfx)
+                        iter->stack[iter->stackp - 1] &= imap__slot_value__;
+                    else if (prfx < xpfx)
+                        iter->stackp--;
+                }
+                return imap_iterate(tree, iter, 0);
             }
             node = imap__node__(tree, sval & imap__slot_value__);
             posn = imap__node_pos__(node);
