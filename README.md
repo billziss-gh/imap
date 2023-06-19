@@ -362,41 +362,41 @@ The `imap` data structure was compiled with `IMAP_USE_SIMD` which enables use of
 
 In the graphs below `imap` stands for the discussed data structure, `imbv` stands for the discussed data structure but with a modified test so that it cannot use its _y_ value compression scheme, `stdu` stands for `std::unordered_map` and `stdm` stands for `std::map`. All times are normalized against the `imap` time on each system (so that the `imap` test "time" is always 1.0 and if a particular test took twice as much time as `imap` then its "time" would be 2.0). In all graphs shorter bars are better.
 
-- `seq_insert`: Sequential insert test of 10 million values.
+- `seq_insert`: Insert test of 10 million sequential values.
 
     ![seq_insert](doc/seq_insert.png)
 
-- `seq_assign`: Sequential assign test of 10 million values.
+- `seq_assign`: Assign test of 10 million sequential values.
 
     ![seq_assign](doc/seq_assign.png)
 
-- `seq_lookup`: Sequential lookup test of 10 million values.
+- `seq_lookup`: Lookup test of 10 million sequential values.
 
     ![seq_lookup](doc/seq_lookup.png)
 
-- `seq_remove`: Sequential remove test of 10 million values.
+- `seq_remove`: Remove test of 10 million sequential values.
 
     ![seq_remove](doc/seq_remove.png)
 
-- `rnd_insert`: Random insert test of 10 million values.
+- `rnd_insert`: Insert test of 10 million random values.
 
     ![rnd_insert](doc/rnd_insert.png)
 
-- `rnd_assign`: Random assign test of 10 million values.
+- `rnd_assign`: Assign test of 10 million random values.
 
     ![rnd_assign](doc/rnd_assign.png)
 
-- `rnd_lookup`: Random lookup test of 10 million values.
+- `rnd_lookup`: Lookup test of 10 million random values.
 
     ![rnd_lookup](doc/rnd_lookup.png)
 
-- `rnd_remove`: Random remove test of 10 million values.
+- `rnd_remove`: Remove test of 10 million random values.
 
     ![rnd_remove](doc/rnd_remove.png)
 
 ### Memory Utilization Tests
 
-- `memtrack`: Memory tracking (in bytes) after insertion of 10 million values.
+- `memtrack`: Memory tracking (in bytes) after insertion of 10 million sequential values.
 
     ![memtrack](doc/memtrack.png)
 
