@@ -954,6 +954,27 @@ static void imap_iterate_test(void)
     slot = imap_lookup(tree, 0xA0008069);
     ASSERT(0 == slot);
     imap_free(tree);
+
+    const unsigned N = 257;
+    tree = 0;
+    for (unsigned i = 0; N > i; i++)
+    {
+        tree = imap_ensure(tree, +1);
+        ASSERT(0 != tree);
+        slot = imap_assign(tree, i);
+        ASSERT(0 != slot);
+        imap_setval(tree, slot, i);
+    }
+    pair = imap_iterate(tree, &iter, 1);
+    for (unsigned i = 0; N > i; i++)
+    {
+        ASSERT(i == pair.x);
+        ASSERT(0 != pair.slot);
+        ASSERT(i == imap_getval(tree, pair.slot));
+        pair = imap_iterate(tree, &iter, 0);
+    }
+    ASSERT(0 == pair.x && 0 == pair.slot);
+    imap_free(tree);
 }
 
 static int u32cmp(const void *x, const void *y)
