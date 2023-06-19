@@ -818,15 +818,17 @@ extern "C" {
     IMAP_DEFNFUNC
     void imap_remove(imap_node_t *tree, imap_u64_t x)
     {
-        imap_iter_t iterdata, *iter = &iterdata;
+        imap_slot_t *slotstack[16 + 1];
+        imap_u32_t stackp;
         imap_node_t *node = tree;
         imap_slot_t *slot;
         imap_u32_t sval, pval, posn = 16, dirn = 0;
-        iter->stackp = 0;
+        stackp = 0;
         for (;;)
         {
             slot = &node->vec32[dirn];
             sval = *slot;
+            slotstack[stackp++] = slot;
             if (!(sval & imap__slot_node__))
             {
                 if ((sval & imap__slot_value__) && imap__node_prefix__(node) == (x & ~0xfull))
@@ -834,31 +836,23 @@ extern "C" {
                     IMAP_ASSERT(0 == posn);
                     imap_delval(tree, slot);
                 }
-                break;
+                --stackp;
+                while (stackp)
+                {
+                    slot = slotstack[--stackp];
+                    sval = *slot;
+                    node = imap__node__(tree, sval & imap__slot_value__);
+                    posn = imap__node_pos__(node);
+                    if (!!posn != imap__node_popcnt__(node, &pval))
+                        break;
+                    imap__free_node__(tree, sval & imap__slot_value__);
+                    *slot = (sval & imap__slot_pmask__) | (pval & ~imap__slot_pmask__);
+                }
+                return;
             }
             node = imap__node__(tree, sval & imap__slot_value__);
             posn = imap__node_pos__(node);
             dirn = imap__xdir__(x, posn);
-            iter->stack[iter->stackp++] = (sval & imap__slot_value__) | dirn;
-        }
-        while (iter->stackp)
-        {
-            sval = iter->stack[--iter->stackp];
-            node = imap__node__(tree, sval & imap__slot_value__);
-            posn = !!imap__node_pos__(node);
-            if (posn != imap__node_popcnt__(node, &pval))
-                break;
-            imap__free_node__(tree, sval & imap__slot_value__);
-            if (!iter->stackp)
-                slot = &tree->vec32[0];
-            else
-            {
-                sval = iter->stack[iter->stackp - 1];
-                dirn = sval & 31;
-                node = imap__node__(tree, sval & imap__slot_value__);
-                slot = &node->vec32[dirn];
-            }
-            *slot = (*slot & imap__slot_pmask__) | (pval & ~imap__slot_pmask__);
         }
     }
 
