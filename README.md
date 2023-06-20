@@ -246,7 +246,6 @@ void imap_remove(imap_node_t *tree, imap_u64_t x)
     {
         slot = &node->vec32[dirn];                                  // (2)
         sval = *slot;                                               // (2)
-        slotstack[stackp++] = slot;                                 // (2)
         if (!(sval & imap__slot_node__))                            // (3)
         {
             if ((sval & imap__slot_value__) && imap__node_prefix__(node) == (x & ~0xfull))
@@ -254,33 +253,32 @@ void imap_remove(imap_node_t *tree, imap_u64_t x)
                 IMAP_ASSERT(0 == posn);
                 imap_delval(tree, slot);                            // (3.1)
             }
-            --stackp;                                               // (3.2)
-            while (stackp)                                          // (3.3)
+            while (stackp)                                          // (3.2)
             {
-                slot = slotstack[--stackp];                         // (3.3.1)
-                sval = *slot;                                       // (3.3.1)
-                node = imap__node__(tree, sval & imap__slot_value__);               // (3.3.2)
-                posn = imap__node_pos__(node);                      // (3.3.2)
-                if (!!posn != imap__node_popcnt__(node, &pval))     // (3.3.3)
-                    break;                                          // (3.3.3)
-                imap__free_node__(tree, sval & imap__slot_value__); // (3.3.4)
-                *slot = (sval & imap__slot_pmask__) | (pval & ~imap__slot_pmask__); // (3.3.5)
+                slot = slotstack[--stackp];                         // (3.2.1)
+                sval = *slot;                                       // (3.2.1)
+                node = imap__node__(tree, sval & imap__slot_value__);               // (3.2.2)
+                posn = imap__node_pos__(node);                      // (3.2.2)
+                if (!!posn != imap__node_popcnt__(node, &pval))     // (3.2.3)
+                    break;                                          // (3.2.3)
+                imap__free_node__(tree, sval & imap__slot_value__); // (3.2.4)
+                *slot = (sval & imap__slot_pmask__) | (pval & ~imap__slot_pmask__); // (3.2.5)
             }
             return;
         }
         node = imap__node__(tree, sval & imap__slot_value__);       // (4)
         posn = imap__node_pos__(node);                              // (4)
         dirn = imap__xdir__(x, posn);                               // (5)
+        slotstack[stackp++] = slot;                                 // (6)
     }
 }
 ```
 
 1. Set the current node to the root of the tree.
-2. Given a direction (`dirn`) access the slot value from the current node and record it in a stack.
+2. Given a direction (`dirn`) access the slot value from the current node.
 3. If the slot value is not a pointer to another node, then:
     1. If the slot has a value and if the node prefix matches the _x_ value then delete the _y_ value from the slot.
-    2. Discard the latest stack entry that points to a value (rather than a node) slot.
-    3. Loop while the stack is not empty.
+    2. Loop while the stack is not empty.
         1. Pop a slot from the stack.
         2. Compute a node from the slot and retrieve its position (`posn`).
         3. Compare the node's "boolean" position (_0_ if the node's position is equal to _0_, _1_ if the node's position is not equal to _0_) to the node's population count (i.e. the number of non-empty slots). This test determines if a node with position _0_ has non-empty slots or if a node with position other than _0_ has two or more subnodes. In either case break the loop without removing any more nodes.
@@ -288,6 +286,7 @@ void imap_remove(imap_node_t *tree, imap_u64_t x)
         5. Update the slot.
 4. Compute the new current node and retrieve its position (`posn`).
 5. Compute the direction at the node's position from the _x_ value.
+6. Record the current slot in a stack.
 
 The _remove_ algorithm may remove 0, 1 or 2 nodes. It works similarly to _lookup_ and attempts to find the slot that should be mapped to the _x_ value. If it finds such a slot then it deletes the value in it. If the position _0_ node that contained the slot has other non-empty slots, then _remove_ completes.
 

@@ -828,7 +828,6 @@ extern "C" {
         {
             slot = &node->vec32[dirn];
             sval = *slot;
-            slotstack[stackp++] = slot;
             if (!(sval & imap__slot_node__))
             {
                 if ((sval & imap__slot_value__) && imap__node_prefix__(node) == (x & ~0xfull))
@@ -836,7 +835,6 @@ extern "C" {
                     IMAP_ASSERT(0 == posn);
                     imap_delval(tree, slot);
                 }
-                --stackp;
                 while (stackp)
                 {
                     slot = slotstack[--stackp];
@@ -853,6 +851,7 @@ extern "C" {
             node = imap__node__(tree, sval & imap__slot_value__);
             posn = imap__node_pos__(node);
             dirn = imap__xdir__(x, posn);
+            slotstack[stackp++] = slot;
         }
     }
 
