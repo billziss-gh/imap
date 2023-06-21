@@ -1,0 +1,21 @@
+name: fuzz
+
+on:
+  push:
+    branches:
+      - 'fuzz*'
+  workflow_dispatch:
+
+jobs:
+  fuzz:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Install prerequisites
+        run: |
+          sudo apt install afl++
+      - name: Fuzz testing
+        run: |
+          sudo sh -c "echo core >/proc/sys/kernel/core_pattern"
+          timeout 10m make -C fuzz || [ $? == 124 ]
