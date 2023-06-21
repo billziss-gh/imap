@@ -443,7 +443,7 @@ extern "C" {
     }
 
     static inline
-    imap_u32_t imap__xpfx__(imap_u64_t x, imap_u32_t pos)
+    imap_u64_t imap__xpfx__(imap_u64_t x, imap_u32_t pos)
     {
         return x & (~0xfull << (pos << 2));
     }

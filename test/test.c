@@ -1098,6 +1098,16 @@ static void imap_locate_test(void)
     slot = imap_assign(tree, 0xA0000056);
     ASSERT(0 != slot);
     imap_setval(tree, slot, 0x56);
+    pair = imap_locate(tree, &iter, 0xA00000560);
+    ASSERT(0 == pair.x && 0 == pair.slot);
+    imap_free(tree);
+
+    tree = 0;
+    tree = imap_ensure(tree, +5);
+    ASSERT(0 != tree);
+    slot = imap_assign(tree, 0xA0000056);
+    ASSERT(0 != slot);
+    imap_setval(tree, slot, 0x56);
     slot = imap_assign(tree, 0xA0000057);
     ASSERT(0 != slot);
     imap_setval(tree, slot, 0x57);
