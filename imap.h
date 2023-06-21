@@ -381,11 +381,11 @@ extern "C" {
     #define imap__slot_boxed__(sval)    (!((sval) & imap__slot_scalar__) && ((sval) >> imap__slot_shift__))
 
     #ifdef __cplusplus
-    #define imap__node_zero__           (imap_node_t{ 0 })
+    #define imap__node_zero__           (imap_node_t{ { { 0 } } })
     #define imap__pair_zero__           (imap_pair_t{ 0 })
     #define imap__pair__(x, slot)       (imap_pair_t{ (x), (slot) })
     #else
-    #define imap__node_zero__           ((imap_node_t){ 0 })
+    #define imap__node_zero__           ((imap_node_t){ { { 0 } } })
     #define imap__pair_zero__           ((imap_pair_t){ 0 })
     #define imap__pair__(x, slot)       ((imap_pair_t){ (x), (slot) })
     #endif
