@@ -1158,6 +1158,29 @@ static void imap_locate_test(void)
     pair = imap_iterate(tree, &iter, 0);
     ASSERT(0 == pair.x && 0 == pair.slot);
     //
+    //
+    pair = imap_locate(tree, &iter, 0x90008059);
+    ASSERT(0xA0000056 == pair.x && 0 != pair.slot);
+    ASSERT(0x56 == imap_getval(tree, pair.slot));
+    pair = imap_iterate(tree, &iter, 0);
+    ASSERT(0xA0000057 == pair.x && 0 != pair.slot);
+    ASSERT(0x57 == imap_getval(tree, pair.slot));
+    pair = imap_iterate(tree, &iter, 0);
+    ASSERT(0xA0008009 == pair.x && 0 != pair.slot);
+    ASSERT(0x8009 == imap_getval(tree, pair.slot));
+    pair = imap_iterate(tree, &iter, 0);
+    ASSERT(0xA0008059 == pair.x && 0 != pair.slot);
+    ASSERT(0x8059 == imap_getval(tree, pair.slot));
+    pair = imap_iterate(tree, &iter, 0);
+    ASSERT(0xA0008069 == pair.x && 0 != pair.slot);
+    ASSERT(0x8069 == imap_getval(tree, pair.slot));
+    pair = imap_iterate(tree, &iter, 0);
+    ASSERT(0 == pair.x && 0 == pair.slot);
+    //
+    //
+    pair = imap_locate(tree, &iter, 0xB0008059);
+    ASSERT(0 == pair.x && 0 == pair.slot);
+    //
     slot = imap_lookup(tree, 0xA0000056);
     ASSERT(0 != slot);
     ASSERT(0x56 == imap_getval(tree, slot));

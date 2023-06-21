@@ -869,20 +869,38 @@ extern "C" {
             sval = *slot;
             if (!(sval & imap__slot_node__))
             {
-                prfx = imap__node_prefix__(node) & ~0xfull;
+                prfx = imap__node_prefix__(node);
                 if ((sval & imap__slot_value__) && prfx == (x & ~0xfull))
                 {
                     IMAP_ASSERT(0 == posn);
                     return imap__pair__(prfx | dirn, slot);
                 }
-                if (0 < iter->stackp)
-                {
-                    xpfx = imap__xpfx__(x, posn);
-                    if (xpfx < prfx)
-                        iter->stack[iter->stackp - 1] &= imap__slot_value__;
-                    else if (prfx < xpfx)
-                        iter->stackp--;
-                }
+                if (iter->stackp)
+                    for (;;)
+                    {
+                        prfx = imap__xpfx__(prfx, posn);
+                        xpfx = imap__xpfx__(x, posn);
+                        if (prfx == xpfx)
+                            break;
+                        if (prfx > xpfx)
+                        {
+                            if (!--iter->stackp)
+                            {
+                                // start at beginning of tree; same as supplying restart=1
+                                iter->stack[iter->stackp++] &= imap__slot_value__;
+                                break;
+                            }
+                            iter->stack[iter->stackp - 1]--;
+                        }
+                        else // if (prfx < xpfx)
+                        {
+                            if (!--iter->stackp)
+                                break;
+                        }
+                        sval = iter->stack[iter->stackp - 1];
+                        node = imap__node__(tree, sval & imap__slot_value__);
+                        posn = imap__node_pos__(node);
+                    }
                 return imap_iterate(tree, iter, 0);
             }
             node = imap__node__(tree, sval & imap__slot_value__);
