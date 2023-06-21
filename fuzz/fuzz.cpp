@@ -79,8 +79,8 @@ int main(int argc, char **argv)
         }
         else if (1 == sscanf(line, "%llx", &x))
         {
-            if (print) printf("%llX\n", x);
             /* lookup */
+            if (print) printf("%llX\n", x);
             slot = imap_lookup(tree, x);
             if (slot)
             {
