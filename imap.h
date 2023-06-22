@@ -531,7 +531,6 @@ extern "C" {
             newtree->vec32[imap__tree_mark__] = sizeof(imap_node_t);
             newtree->vec32[imap__tree_size__] = newsize;
             newtree->vec32[imap__tree_nfre__] = 0;
-            newtree->vec32[imap__tree_vfre__] = 0;
             if (sizeof(imap_u64_t) == ysize)
             {
                 newtree->vec32[imap__tree_vfre__] = 3 << imap__slot_shift__;
@@ -545,8 +544,20 @@ extern "C" {
             if (sizeof(imap_u128_t) == ysize)
             {
                 newtree->vec32[imap__tree_vfre__] = 4 << imap__slot_shift__;
+                newtree->vec128[1].v[1] = 0;
                 newtree->vec128[2].v[0] = 6 << imap__slot_shift__;
+                newtree->vec128[2].v[1] = 0;
                 newtree->vec128[3].v[0] = 0;
+                newtree->vec128[3].v[1] = 0;
+            }
+            else
+            {
+                newtree->vec32[imap__tree_vfre__] = 0;
+                newtree->vec64[3] = 0;
+                newtree->vec64[4] = 0;
+                newtree->vec64[5] = 0;
+                newtree->vec64[6] = 0;
+                newtree->vec64[7] = 0;
             }
         }
         else
@@ -635,6 +646,7 @@ extern "C" {
                 if (0 == posn && prfx == (x & ~0xfull))
                     return slot;
                 diff = imap__xpos__(prfx ^ x);
+                IMAP_ASSERT(diff < 16);
                 for (stacki = stackp; diff > posn;)
                     posn = posnstack[--stacki];
                 if (stacki != stackp)
