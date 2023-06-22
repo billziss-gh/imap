@@ -308,7 +308,7 @@ For example after running _remove_ for _x=A0008059_:
 
 ## Implementation
 
-The reference implementation is a single header C/C++ file named `imap.h`. Simply include `<imap.h>` to use it.
+The reference implementation is a single header C/C++ file named [`<imap.h>`](imap.h).
 
 It provides the following types:
 
@@ -331,12 +331,16 @@ It also provides the following functions:
 - `imap_locate`: Locates a particular value in the tree, populates an iterator and returns a pair that contains the value and mapped slot. If the value is not found, then the returned pair contains the next value after the specified one and the corresponding mapped slot. If there is no such value the returned pair contains all zeroes.
 - `imap_iterate`: Starts or continues an iteration. The returned pair contains the next value and the corresponding mapped slot. If there is no such value the returned pair contains all zeroes.
 
-The implementation in `imap.h` can be tuned using configuration macros:
+The implementation in `<imap.h>` can be tuned using configuration macros:
 
 - Memory allocation can be tuned using the `IMAP_ALIGNED_ALLOC`, `IMAP_ALIGNED_FREE`, `IMAP_MALLOC`, `IMAP_FREE` macros.
 - Raw performance can be improved with the `IMAP_USE_SIMD` macro. The default is to use portable versions of certain utility functions, but the `IMAP_USE_SIMD` enables use of AVX2 on x86. If one further defines `IMAP_USE_SIMD=512` then use of AVX512 on x86 is also enabled.
 
-The `imap.h` file is designed to be used as a single header file from both C and C++. It is also possible to split the interface and implementation; for this purpose look into the `IMAP_INTERFACE` and `IMAP_IMPLEMENTATION` macros.
+The `<imap.h>` file is designed to be used as a single header file from both C and C++. It is also possible to split the interface and implementation; for this purpose look into the `IMAP_INTERFACE` and `IMAP_IMPLEMENTATION` macros.
+
+### Integer Set and Integer Interval Map
+
+This project includes implementations of an integer set in [`<iset.h>`](iset.h) and an integer interval map in [`<ivmap.h>`](ivmap.h). Both implementations are based on the implementation of the integer map in `<imap.h>`.
 
 ## Performance
 
