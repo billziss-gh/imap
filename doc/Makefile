@@ -5,7 +5,7 @@ ifeq ($(OS),Windows_NT)
 GRAPH=.\graph.exe
 bin: graph.exe
 graph.exe: ../imap.h graph.c
-	cl /I.. /D_CRT_SECURE_NO_WARNINGS /W3 /O2 /std:c11 /permissive- graph.c /Fe$@
+	cl -I.. -D_CRT_SECURE_NO_WARNINGS -W3 -O2 -std:c11 -permissive- graph.c /Fe$@
 
 else
 
